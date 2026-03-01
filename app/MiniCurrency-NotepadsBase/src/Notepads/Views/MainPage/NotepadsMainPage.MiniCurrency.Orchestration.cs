@@ -74,7 +74,7 @@ namespace Notepads.Views.MainPage
             RestoreMiniCurrencyVisibleCurrencies();
             RestoreMiniCurrencyValues();
             RebuildMiniCurrencyAddList();
-            SetMiniCurrencyStatus("Загрузка курсов...");
+            SetMiniCurrencyRatesStatus("Загрузка курсов...");
             HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
             ConvertFromMiniCurrency(_miniCurrencyActiveCode);
             _ = LoadMiniCurrencyRatesAsync(silent: true);

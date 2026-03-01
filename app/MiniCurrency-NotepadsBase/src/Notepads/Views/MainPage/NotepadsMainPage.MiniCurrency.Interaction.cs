@@ -31,9 +31,16 @@ namespace Notepads.Views.MainPage
                 return;
             }
 
+            var switchedCurrency = !string.Equals(_miniCurrencyActiveCode, code, StringComparison.OrdinalIgnoreCase);
             _miniCurrencyActiveCode = code;
             HighlightMiniCurrencyActiveRow(code);
             _miniCurrencyReplaceOnNextInput = true;
+            ResetMiniCurrencyDeferredExpression();
+
+            if (switchedCurrency)
+            {
+                RestoreMiniCurrencyRatesStatus();
+            }
         }
 
         private void CurrencyRow_Tapped(object sender, TappedRoutedEventArgs e)
@@ -623,14 +630,21 @@ namespace Notepads.Views.MainPage
 
         private void ActivateMiniCurrencyInput(string code)
         {
-            if (string.IsNullOrWhiteSpace(code) || !_miniCurrencyInputs.TryGetValue(code, out var textBox))
+            if (string.IsNullOrWhiteSpace(code) || !_miniCurrencyInputs.TryGetValue(code, out _))
             {
                 return;
             }
 
+            var switchedCurrency = !string.Equals(_miniCurrencyActiveCode, code, StringComparison.OrdinalIgnoreCase);
             _miniCurrencyActiveCode = code;
             HighlightMiniCurrencyActiveRow(code);
             _miniCurrencyReplaceOnNextInput = true;
+            ResetMiniCurrencyDeferredExpression();
+
+            if (switchedCurrency)
+            {
+                RestoreMiniCurrencyRatesStatus();
+            }
 
             // PointerPressed is handled, so TextBox should not enter normal edit mode.
         }
@@ -748,11 +762,12 @@ namespace Notepads.Views.MainPage
 
             if (args.VirtualKey == VirtualKey.Back)
             {
-                var current = textBox.Text ?? string.Empty;
+                var current = (textBox.Text ?? string.Empty).Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
                 if (_miniCurrencyReplaceOnNextInput)
                 {
                     textBox.Text = "0";
                     _miniCurrencyReplaceOnNextInput = true;
+                    ResetMiniCurrencyDeferredExpression();
                     SetMiniCurrencyStatus("0");
                     ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                     SaveMiniCurrencyValues();
@@ -773,6 +788,7 @@ namespace Notepads.Views.MainPage
                 {
                     textBox.Text = "0";
                     _miniCurrencyReplaceOnNextInput = true;
+                    ResetMiniCurrencyDeferredExpression();
                 }
 
                 if (IsMiniCurrencyExpressionText(textBox.Text))
@@ -784,6 +800,11 @@ namespace Notepads.Views.MainPage
                     ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                 }
 
+                if (!IsMiniCurrencyExpressionText(textBox.Text))
+                {
+                    textBox.Text = FormatMiniCurrencyLiveInputText(textBox.Text);
+                }
+
                 SaveMiniCurrencyValues();
                 args.Handled = true;
                 return;
@@ -793,6 +814,7 @@ namespace Notepads.Views.MainPage
             {
                 textBox.Text = "0";
                 _miniCurrencyReplaceOnNextInput = true;
+                ResetMiniCurrencyDeferredExpression();
                 SetMiniCurrencyStatus("0");
                 ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                 SaveMiniCurrencyValues();
@@ -831,16 +853,51 @@ namespace Notepads.Views.MainPage
                 return;
             }
 
-            var current = (_miniCurrencyReplaceOnNextInput ? string.Empty : (textBox.Text ?? string.Empty))
-                .Replace("\u00A0", " ");
+            var compactCurrentDisplay = (textBox.Text ?? string.Empty)
+                .Replace(" ", string.Empty)
+                .Replace("\u00A0", string.Empty);
+
+            // Canonical calculator behavior:
+            // + - * / are not shown inside the active input, only in status/history line.
+            if (IsMiniCurrencyBinaryOperatorToken(token))
+            {
+                if (_miniCurrencyDeferredExpressionActive)
+                {
+                    // Operator pressed again before second operand typing: just replace pending operator.
+                    if (_miniCurrencyReplaceOnNextInput)
+                    {
+                        _miniCurrencyDeferredExpressionPrefix = ReplaceMiniCurrencyTrailingBinaryOperator(_miniCurrencyDeferredExpressionPrefix, token);
+                        SetMiniCurrencyStatus(_miniCurrencyDeferredExpressionPrefix);
+                        SaveMiniCurrencyValues();
+                        return;
+                    }
+
+                    // Second operand is already typed, so fold pending operation and keep chaining.
+                    EvaluateMiniCurrencyExpression(textBox, token);
+                    return;
+                }
+
+                var firstOperand = SeedMiniCurrencyExpressionFromText(compactCurrentDisplay);
+                if (string.IsNullOrWhiteSpace(firstOperand))
+                {
+                    firstOperand = "0";
+                }
+
+                _miniCurrencyDeferredExpressionPrefix = firstOperand + token;
+                _miniCurrencyDeferredExpressionActive = true;
+                _miniCurrencyReplaceOnNextInput = true;
+                textBox.Text = FormatMiniCurrencyLiveInputText(firstOperand);
+                SetMiniCurrencyStatus(_miniCurrencyDeferredExpressionPrefix);
+                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+                SaveMiniCurrencyValues();
+                return;
+            }
+
+            var current = (_miniCurrencyReplaceOnNextInput ? string.Empty : compactCurrentDisplay);
 
             if (_miniCurrencyReplaceOnNextInput)
             {
                 var continueFromResult =
-                    token == '+' ||
-                    token == '-' ||
-                    token == '*' ||
-                    token == '/' ||
                     token == '%' ||
                     token == ')';
 
@@ -855,12 +912,20 @@ namespace Notepads.Views.MainPage
                 return;
             }
 
-            textBox.Text = next;
+            var nextForDisplay = IsMiniCurrencyExpressionText(next)
+                ? next
+                : FormatMiniCurrencyLiveInputText(next);
+            textBox.Text = nextForDisplay;
             _miniCurrencyReplaceOnNextInput = false;
 
             if (IsMiniCurrencyExpressionText(next))
             {
                 SetMiniCurrencyStatus(next);
+            }
+            else if (_miniCurrencyDeferredExpressionActive)
+            {
+                SetMiniCurrencyStatus(_miniCurrencyDeferredExpressionPrefix + nextForDisplay.Replace(" ", string.Empty).Replace("\u00A0", string.Empty));
+                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
             }
             else
             {
@@ -872,12 +937,29 @@ namespace Notepads.Views.MainPage
 
         private void EvaluateMiniCurrencyExpression(TextBox textBox)
         {
+            EvaluateMiniCurrencyExpression(textBox, null);
+        }
+
+        private void EvaluateMiniCurrencyExpression(TextBox textBox, char? nextOperator)
+        {
             if (textBox == null)
             {
                 return;
             }
 
             var rawExpression = (textBox.Text ?? string.Empty).Trim();
+
+            if (_miniCurrencyDeferredExpressionActive)
+            {
+                var operand = SeedMiniCurrencyExpressionFromText(rawExpression);
+                if (string.IsNullOrWhiteSpace(operand))
+                {
+                    operand = "0";
+                }
+
+                rawExpression = _miniCurrencyDeferredExpressionPrefix + operand;
+            }
+
             if (string.IsNullOrWhiteSpace(rawExpression))
             {
                 return;
@@ -922,11 +1004,23 @@ namespace Notepads.Views.MainPage
                     return;
                 }
 
-                textBox.Text = FormatMiniCurrencyNumber(value);
-                _miniCurrencyReplaceOnNextInput = true;
+                var resultText = FormatMiniCurrencyNumber(value);
+                textBox.Text = resultText;
                 SetMiniCurrencyStatus(rawExpression + "=");
                 ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                 SaveMiniCurrencyValues();
+
+                if (nextOperator.HasValue && IsMiniCurrencyBinaryOperatorToken(nextOperator.Value))
+                {
+                    _miniCurrencyDeferredExpressionPrefix = SeedMiniCurrencyExpressionFromText(resultText) + nextOperator.Value;
+                    _miniCurrencyDeferredExpressionActive = true;
+                    _miniCurrencyReplaceOnNextInput = true;
+                }
+                else
+                {
+                    _miniCurrencyReplaceOnNextInput = true;
+                    ResetMiniCurrencyDeferredExpression();
+                }
             }
             catch
             {
@@ -1104,6 +1198,123 @@ namespace Notepads.Views.MainPage
             }
 
             return next;
+        }
+
+        private static bool IsMiniCurrencyBinaryOperatorToken(char token)
+        {
+            return token == '+' || token == '-' || token == '*' || token == '/';
+        }
+
+        private static bool EndsWithMiniCurrencyBinaryOperator(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            var compact = text.Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+            if (compact.Length == 0)
+            {
+                return false;
+            }
+
+            return IsMiniCurrencyBinaryOperatorToken(compact[compact.Length - 1]);
+        }
+
+        private static string ReplaceMiniCurrencyTrailingBinaryOperator(string expression, char token)
+        {
+            var compact = (expression ?? string.Empty).Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+            if (compact.Length == 0)
+            {
+                return "0" + token;
+            }
+
+            if (IsMiniCurrencyBinaryOperatorToken(compact[compact.Length - 1]))
+            {
+                return compact.Substring(0, compact.Length - 1) + token;
+            }
+
+            return compact + token;
+        }
+
+        private string FormatMiniCurrencyLiveInputText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return "0";
+            }
+
+            var compact = text.Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+            if (compact == "0")
+            {
+                return "0";
+            }
+
+            var sign = string.Empty;
+            if (compact.StartsWith("-", StringComparison.Ordinal))
+            {
+                sign = "-";
+                compact = compact.Substring(1);
+            }
+
+            if (compact.Length == 0)
+            {
+                return sign + "0";
+            }
+
+            var hasComma = compact.Contains(",");
+            var parts = compact.Split(new[] { ',' }, 2);
+            var integerPart = parts[0];
+            var fractionalPart = parts.Length > 1 ? parts[1] : string.Empty;
+
+            if (integerPart.Length == 0)
+            {
+                integerPart = "0";
+            }
+
+            if (!integerPart.All(char.IsDigit))
+            {
+                return sign + compact;
+            }
+
+            var groupedInteger = GroupMiniCurrencyDigits(integerPart);
+            if (!hasComma)
+            {
+                return sign + groupedInteger;
+            }
+
+            var separator = _miniCurrencyCulture.NumberFormat.NumberDecimalSeparator;
+            return sign + groupedInteger + separator + fractionalPart;
+        }
+
+        private static string GroupMiniCurrencyDigits(string digits)
+        {
+            if (string.IsNullOrEmpty(digits))
+            {
+                return "0";
+            }
+
+            var start = digits.Length % 3;
+            if (start == 0)
+            {
+                start = 3;
+            }
+
+            var builder = new System.Text.StringBuilder(digits.Length + (digits.Length / 3));
+            builder.Append(digits.Substring(0, start));
+            for (var index = start; index < digits.Length; index += 3)
+            {
+                builder.Append(' ');
+                builder.Append(digits.Substring(index, 3));
+            }
+
+            return builder.ToString();
+        }
+
+        private void ResetMiniCurrencyDeferredExpression()
+        {
+            _miniCurrencyDeferredExpressionActive = false;
+            _miniCurrencyDeferredExpressionPrefix = string.Empty;
         }
 
         private static string AppendMiniCurrencyExpressionFragment(string current, string fragment)

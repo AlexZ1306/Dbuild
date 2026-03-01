@@ -63,7 +63,7 @@ namespace Notepads.Views.MainPage
             {
                 if (!silent)
                 {
-                    SetMiniCurrencyStatus("Обновление курсов уже выполняется...");
+                    SetMiniCurrencyRatesStatus("Обновление курсов уже выполняется...");
                 }
                 return;
             }
@@ -73,7 +73,7 @@ namespace Notepads.Views.MainPage
             {
                 if (!silent)
                 {
-                    SetMiniCurrencyStatus("Обновление курсов...");
+                    SetMiniCurrencyRatesStatus("Обновление курсов...");
                 }
 
                 var fiatUpdated = false;
@@ -129,7 +129,7 @@ namespace Notepads.Views.MainPage
 
                 if (fiatUpdated || cryptoUpdated > 0 || supplementalUpdated > 0 || manualFallbackApplied > 0)
                 {
-                    SetMiniCurrencyStatus("Курсы обновлены");
+                    SetMiniCurrencyRatesStatus("Курсы обновлены");
                     ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                     return;
                 }
@@ -139,12 +139,12 @@ namespace Notepads.Views.MainPage
                     manualFallbackApplied = ApplyMiniCurrencyManualFallbackRates();
                     if (manualFallbackApplied > 0)
                     {
-                        SetMiniCurrencyStatus("Курсы частично обновлены");
+                        SetMiniCurrencyRatesStatus("Курсы частично обновлены");
                         ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                     }
                     else
                     {
-                        SetMiniCurrencyStatus("Не удалось загрузить курсы");
+                        SetMiniCurrencyRatesStatus("Не удалось загрузить курсы");
                     }
                 }
                 else
@@ -160,12 +160,12 @@ namespace Notepads.Views.MainPage
                     var manualOnlyApplied = ApplyMiniCurrencyManualFallbackRates();
                     if (manualOnlyApplied > 0)
                     {
-                        SetMiniCurrencyStatus("Оффлайн: курсы частично доступны");
+                        SetMiniCurrencyRatesStatus("Оффлайн: курсы частично доступны");
                         ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                     }
                     else
                     {
-                        SetMiniCurrencyStatus("Нет интернета и нет кеша курсов");
+                        SetMiniCurrencyRatesStatus("Нет интернета и нет кеша курсов");
                     }
                 }
                 else
@@ -408,11 +408,11 @@ namespace Notepads.Views.MainPage
 
                     if (DateTimeOffset.TryParse(tsText, out var ts))
                     {
-                        SetMiniCurrencyStatus($"Оффлайн: курсы из кеша ({ts.LocalDateTime:dd.MM.yyyy HH:mm})");
+                        SetMiniCurrencyRatesStatus($"Оффлайн: курсы из кеша ({ts.LocalDateTime:dd.MM.yyyy HH:mm})");
                     }
                     else
                     {
-                        SetMiniCurrencyStatus("Оффлайн: курсы из кеша");
+                        SetMiniCurrencyRatesStatus("Оффлайн: курсы из кеша");
                     }
 
                     return true;

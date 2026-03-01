@@ -57,6 +57,9 @@ namespace Notepads.Views.MainPage
         private bool _miniCurrencyIsUpdating;
         private bool _miniCurrencyRatesRefreshInProgress;
         private bool _miniCurrencyReplaceOnNextInput = true;
+        private bool _miniCurrencyDeferredExpressionActive;
+        private string _miniCurrencyDeferredExpressionPrefix = string.Empty;
+        private string _miniCurrencyRatesStatusText = "Загрузка курсов...";
         private FrameworkElement _miniCurrencyPressedRow;
         private FrameworkElement _miniCurrencyDraggingRow;
         private Border _miniCurrencyDragPlaceholder;

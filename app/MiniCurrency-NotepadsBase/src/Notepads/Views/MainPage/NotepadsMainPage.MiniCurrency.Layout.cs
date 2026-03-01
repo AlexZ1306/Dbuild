@@ -194,6 +194,20 @@ namespace Notepads.Views.MainPage
             }
         }
 
+        private void SetMiniCurrencyRatesStatus(string text)
+        {
+            _miniCurrencyRatesStatusText = text ?? string.Empty;
+            SetMiniCurrencyStatus(_miniCurrencyRatesStatusText);
+        }
+
+        private void RestoreMiniCurrencyRatesStatus()
+        {
+            var status = string.IsNullOrWhiteSpace(_miniCurrencyRatesStatusText)
+                ? "Курсы обновлены"
+                : _miniCurrencyRatesStatusText;
+            SetMiniCurrencyStatus(status);
+        }
+
         private void InitializeMiniCurrencyFlags()
         {
             // Set SVG sources explicitly for the built-in rows.
