@@ -32,6 +32,9 @@ namespace Notepads.Views.MainPage
         private const string MiniCurrencyValuesKey = "MiniCurrency.Values";
         private const string MiniCurrencyRatesCacheKey = "MiniCurrency.RatesCacheJson";
         private const string MiniCurrencyRatesCacheTsKey = "MiniCurrency.RatesCacheTs";
+        private const int MiniCurrencyCalculatorMaxDigitsPerNumber = 16;
+        private const int MiniCurrencyCalculatorMaxExpressionLength = 64;
+        private const double MiniCurrencyCalculatorMaxAbsoluteValue = 9_999_999_999_999_999d;
 
         private readonly Dictionary<string, double> _miniCurrencyRates = new Dictionary<string, double>()
         {

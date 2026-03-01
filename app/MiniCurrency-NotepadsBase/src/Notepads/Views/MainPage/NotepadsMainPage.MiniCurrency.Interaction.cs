@@ -9,6 +9,7 @@ namespace Notepads.Views.MainPage
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using NCalc;
     using Windows.System;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
@@ -652,31 +653,41 @@ namespace Notepads.Views.MainPage
                 ch = ',';
             }
 
-            if (!char.IsDigit(ch) && ch != ',')
+            if (ch == 'x' || ch == 'X')
+            {
+                ch = '*';
+            }
+            else if (ch == '÷')
+            {
+                ch = '/';
+            }
+            else if (ch == '−' || ch == '–' || ch == '—')
+            {
+                ch = '-';
+            }
+
+            if (ch == '=')
+            {
+                EvaluateMiniCurrencyExpression(textBox);
+                args.Handled = true;
+                return;
+            }
+
+            if (!char.IsDigit(ch) &&
+                ch != ',' &&
+                ch != '+' &&
+                ch != '-' &&
+                ch != '*' &&
+                ch != '/' &&
+                ch != '%' &&
+                ch != '(' &&
+                ch != ')')
             {
                 return;
             }
 
-            var next = _miniCurrencyReplaceOnNextInput ? string.Empty : (textBox.Text ?? string.Empty);
-
-            if (ch == ',')
-            {
-                if (next.Contains(","))
-                {
-                    return;
-                }
-
-                next = string.IsNullOrEmpty(next) ? "0," : next + ",";
-            }
-            else
-            {
-                next += ch;
-            }
-
-            _miniCurrencyReplaceOnNextInput = false;
-            textBox.Text = next;
-            ConvertFromMiniCurrency(_miniCurrencyActiveCode);
-            SaveMiniCurrencyValues();
+            AppendMiniCurrencyCalculatorToken(textBox, ch);
+            args.Handled = true;
         }
 
         private void MiniCurrency_CoreWindow_KeyDown(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.KeyEventArgs args)
@@ -720,6 +731,14 @@ namespace Notepads.Views.MainPage
                     }
 
                     return;
+                case VirtualKey.Enter:
+                    if (_miniCurrencyInputs.TryGetValue(_miniCurrencyActiveCode, out var activeTextBox) && IsMiniCurrencyVisible(_miniCurrencyActiveCode))
+                    {
+                        EvaluateMiniCurrencyExpression(activeTextBox);
+                        args.Handled = true;
+                    }
+
+                    return;
             }
 
             if (!_miniCurrencyInputs.TryGetValue(_miniCurrencyActiveCode, out var textBox) || !IsMiniCurrencyVisible(_miniCurrencyActiveCode))
@@ -732,9 +751,12 @@ namespace Notepads.Views.MainPage
                 var current = textBox.Text ?? string.Empty;
                 if (_miniCurrencyReplaceOnNextInput)
                 {
-                    textBox.Text = string.Empty;
+                    textBox.Text = "0";
+                    _miniCurrencyReplaceOnNextInput = true;
+                    SetMiniCurrencyStatus("0");
                     ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                     SaveMiniCurrencyValues();
+                    args.Handled = true;
                     return;
                 }
 
@@ -744,10 +766,24 @@ namespace Notepads.Views.MainPage
                 }
                 else
                 {
-                    textBox.Text = string.Empty;
+                    textBox.Text = "0";
                 }
 
-                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+                if (string.IsNullOrWhiteSpace(textBox.Text))
+                {
+                    textBox.Text = "0";
+                    _miniCurrencyReplaceOnNextInput = true;
+                }
+
+                if (IsMiniCurrencyExpressionText(textBox.Text))
+                {
+                    SetMiniCurrencyStatus(textBox.Text ?? string.Empty);
+                }
+                else
+                {
+                    ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+                }
+
                 SaveMiniCurrencyValues();
                 args.Handled = true;
                 return;
@@ -755,8 +791,9 @@ namespace Notepads.Views.MainPage
 
             if (args.VirtualKey == VirtualKey.Delete)
             {
-                textBox.Text = string.Empty;
+                textBox.Text = "0";
                 _miniCurrencyReplaceOnNextInput = true;
+                SetMiniCurrencyStatus("0");
                 ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                 SaveMiniCurrencyValues();
                 args.Handled = true;
@@ -777,7 +814,469 @@ namespace Notepads.Views.MainPage
 
             _miniCurrencyActiveCode = code;
             HighlightMiniCurrencyActiveRow(code);
+
+            if (IsMiniCurrencyExpressionText(textBox.Text))
+            {
+                SetMiniCurrencyStatus(textBox.Text ?? string.Empty);
+                return;
+            }
+
             ConvertFromMiniCurrency(code);
+        }
+
+        private void AppendMiniCurrencyCalculatorToken(TextBox textBox, char token)
+        {
+            if (textBox == null)
+            {
+                return;
+            }
+
+            var current = (_miniCurrencyReplaceOnNextInput ? string.Empty : (textBox.Text ?? string.Empty))
+                .Replace("\u00A0", " ");
+
+            if (_miniCurrencyReplaceOnNextInput)
+            {
+                var continueFromResult =
+                    token == '+' ||
+                    token == '-' ||
+                    token == '*' ||
+                    token == '/' ||
+                    token == '%' ||
+                    token == ')';
+
+                current = continueFromResult
+                    ? SeedMiniCurrencyExpressionFromText(textBox.Text)
+                    : string.Empty;
+            }
+
+            var next = BuildNextMiniCurrencyExpression(current, token);
+            if (next == current)
+            {
+                return;
+            }
+
+            textBox.Text = next;
+            _miniCurrencyReplaceOnNextInput = false;
+
+            if (IsMiniCurrencyExpressionText(next))
+            {
+                SetMiniCurrencyStatus(next);
+            }
+            else
+            {
+                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+            }
+
+            SaveMiniCurrencyValues();
+        }
+
+        private void EvaluateMiniCurrencyExpression(TextBox textBox)
+        {
+            if (textBox == null)
+            {
+                return;
+            }
+
+            var rawExpression = (textBox.Text ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(rawExpression))
+            {
+                return;
+            }
+
+            var compactExpression = rawExpression.Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+            if (compactExpression.Length > MiniCurrencyCalculatorMaxExpressionLength)
+            {
+                SetMiniCurrencyStatus($"Максимум {MiniCurrencyCalculatorMaxExpressionLength} символа в выражении");
+                return;
+            }
+
+            if (!IsMiniCurrencyExpressionText(rawExpression))
+            {
+                _miniCurrencyReplaceOnNextInput = true;
+                SetMiniCurrencyStatus(rawExpression + "=");
+                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+                SaveMiniCurrencyValues();
+                return;
+            }
+
+            try
+            {
+                var normalized = NormalizeMiniCurrencyExpressionForEvaluation(rawExpression);
+                if (string.IsNullOrWhiteSpace(normalized))
+                {
+                    return;
+                }
+
+                var expression = new Expression(normalized);
+                var evaluated = expression.Evaluate();
+                if (!TryConvertMiniCurrencyExpressionResultToDouble(evaluated, out var value) ||
+                    double.IsNaN(value) ||
+                    double.IsInfinity(value))
+                {
+                    throw new InvalidOperationException("Expression result is invalid.");
+                }
+
+                if (Math.Abs(value) > MiniCurrencyCalculatorMaxAbsoluteValue)
+                {
+                    SetMiniCurrencyStatus($"Максимум {MiniCurrencyCalculatorMaxDigitsPerNumber} цифр в числе");
+                    return;
+                }
+
+                textBox.Text = FormatMiniCurrencyNumber(value);
+                _miniCurrencyReplaceOnNextInput = true;
+                SetMiniCurrencyStatus(rawExpression + "=");
+                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+                SaveMiniCurrencyValues();
+            }
+            catch
+            {
+                SetMiniCurrencyStatus($"Ошибка выражения: {rawExpression}");
+            }
+        }
+
+        private static string SeedMiniCurrencyExpressionFromText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return "0";
+            }
+
+            return text.Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+        }
+
+        private static bool IsMiniCurrencyExpressionText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            var compact = text.Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+            for (var i = 0; i < compact.Length; i++)
+            {
+                var ch = compact[i];
+                if (ch == '+' || ch == '*' || ch == '/' || ch == '%' || ch == '(' || ch == ')' || ch == '=' || ch == '×' || ch == '÷')
+                {
+                    return true;
+                }
+
+                if (ch == '-')
+                {
+                    if (i == 0)
+                    {
+                        continue;
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string BuildNextMiniCurrencyExpression(string current, char token)
+        {
+            var next = current ?? string.Empty;
+
+            if (char.IsDigit(token))
+            {
+                if (GetMiniCurrencyCurrentNumericDigitCount(next) >= MiniCurrencyCalculatorMaxDigitsPerNumber)
+                {
+                    return next;
+                }
+
+                return AppendMiniCurrencyExpressionFragment(next, token.ToString());
+            }
+
+            if (token == ',')
+            {
+                if (next.Length == 0)
+                {
+                    return AppendMiniCurrencyExpressionFragment(next, "0,");
+                }
+
+                var last = next[next.Length - 1];
+                if (last == ')')
+                {
+                    return AppendMiniCurrencyExpressionFragment(next, "*0,");
+                }
+
+                if (last == '%')
+                {
+                    return next;
+                }
+
+                if (last == '+' || last == '-' || last == '*' || last == '/' || last == '(')
+                {
+                    return AppendMiniCurrencyExpressionFragment(next, "0,");
+                }
+
+                var segment = GetMiniCurrencyCurrentNumericSegment(next);
+                if (segment.Contains(","))
+                {
+                    return next;
+                }
+
+                return AppendMiniCurrencyExpressionFragment(next, ",");
+            }
+
+            if (token == '+' || token == '-' || token == '*' || token == '/')
+            {
+                if (next.Length == 0)
+                {
+                    return token == '-'
+                        ? AppendMiniCurrencyExpressionFragment(next, "-")
+                        : AppendMiniCurrencyExpressionFragment(next, "0" + token);
+                }
+
+                var last = next[next.Length - 1];
+                if (last == '+' || last == '-' || last == '*' || last == '/')
+                {
+                    return next.Substring(0, next.Length - 1) + token;
+                }
+
+                if (last == '(')
+                {
+                    return token == '-' ? AppendMiniCurrencyExpressionFragment(next, token.ToString()) : next;
+                }
+
+                if (last == ',')
+                {
+                    return AppendMiniCurrencyExpressionFragment(next, "0" + token);
+                }
+
+                return AppendMiniCurrencyExpressionFragment(next, token.ToString());
+            }
+
+            if (token == '%')
+            {
+                if (next.Length == 0)
+                {
+                    return next;
+                }
+
+                var last = next[next.Length - 1];
+                if (char.IsDigit(last) || last == ')')
+                {
+                    return AppendMiniCurrencyExpressionFragment(next, "%");
+                }
+
+                if (last == ',')
+                {
+                    return AppendMiniCurrencyExpressionFragment(next, "0%");
+                }
+
+                return next;
+            }
+
+            if (token == '(')
+            {
+                if (next.Length == 0)
+                {
+                    return AppendMiniCurrencyExpressionFragment(next, "(");
+                }
+
+                var last = next[next.Length - 1];
+                if (char.IsDigit(last) || last == ')' || last == '%')
+                {
+                    return AppendMiniCurrencyExpressionFragment(next, "*(");
+                }
+
+                return AppendMiniCurrencyExpressionFragment(next, "(");
+            }
+
+            if (token == ')')
+            {
+                if (next.Length == 0)
+                {
+                    return next;
+                }
+
+                var last = next[next.Length - 1];
+                if (last == '+' || last == '-' || last == '*' || last == '/' || last == '(' || last == ',')
+                {
+                    return next;
+                }
+
+                return GetMiniCurrencyParenthesesBalance(next) > 0
+                    ? AppendMiniCurrencyExpressionFragment(next, ")")
+                    : next;
+            }
+
+            return next;
+        }
+
+        private static string AppendMiniCurrencyExpressionFragment(string current, string fragment)
+        {
+            var baseExpression = current ?? string.Empty;
+            if (string.IsNullOrEmpty(fragment))
+            {
+                return baseExpression;
+            }
+
+            if (baseExpression.Length + fragment.Length > MiniCurrencyCalculatorMaxExpressionLength)
+            {
+                return baseExpression;
+            }
+
+            return baseExpression + fragment;
+        }
+
+        private static int GetMiniCurrencyParenthesesBalance(string expression)
+        {
+            if (string.IsNullOrEmpty(expression))
+            {
+                return 0;
+            }
+
+            var balance = 0;
+            foreach (var ch in expression)
+            {
+                if (ch == '(')
+                {
+                    balance++;
+                }
+                else if (ch == ')')
+                {
+                    balance--;
+                }
+            }
+
+            return balance;
+        }
+
+        private static string GetMiniCurrencyCurrentNumericSegment(string expression)
+        {
+            if (string.IsNullOrEmpty(expression))
+            {
+                return string.Empty;
+            }
+
+            var index = expression.Length - 1;
+            while (index >= 0 && (char.IsDigit(expression[index]) || expression[index] == ','))
+            {
+                index--;
+            }
+
+            return expression.Substring(index + 1);
+        }
+
+        private static int GetMiniCurrencyCurrentNumericDigitCount(string expression)
+        {
+            var segment = GetMiniCurrencyCurrentNumericSegment(expression);
+            if (string.IsNullOrEmpty(segment))
+            {
+                return 0;
+            }
+
+            var count = 0;
+            foreach (var ch in segment)
+            {
+                if (char.IsDigit(ch))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static string NormalizeMiniCurrencyExpressionForEvaluation(string expression)
+        {
+            if (string.IsNullOrWhiteSpace(expression))
+            {
+                return string.Empty;
+            }
+
+            var compact = expression.Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+            var normalized = new System.Text.StringBuilder(compact.Length * 2);
+            foreach (var ch in compact)
+            {
+                switch (ch)
+                {
+                    case ',':
+                        normalized.Append('.');
+                        break;
+                    case '×':
+                    case 'x':
+                    case 'X':
+                        normalized.Append('*');
+                        break;
+                    case '÷':
+                    case ':':
+                        normalized.Append('/');
+                        break;
+                    case '−':
+                    case '–':
+                    case '—':
+                        normalized.Append('-');
+                        break;
+                    case '%':
+                        normalized.Append("/100");
+                        break;
+                    case '=':
+                        break;
+                    default:
+                        normalized.Append(ch);
+                        break;
+                }
+            }
+
+            return normalized.ToString();
+        }
+
+        private static bool TryConvertMiniCurrencyExpressionResultToDouble(object value, out double result)
+        {
+            switch (value)
+            {
+                case null:
+                    result = 0;
+                    return false;
+                case double d:
+                    result = d;
+                    return true;
+                case float f:
+                    result = f;
+                    return true;
+                case decimal m:
+                    result = (double)m;
+                    return true;
+                case int i:
+                    result = i;
+                    return true;
+                case long l:
+                    result = l;
+                    return true;
+                case short s:
+                    result = s;
+                    return true;
+                case uint ui:
+                    result = ui;
+                    return true;
+                case ulong ul:
+                    result = ul;
+                    return true;
+                case byte b:
+                    result = b;
+                    return true;
+                case sbyte sb:
+                    result = sb;
+                    return true;
+                case string text when double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed):
+                    result = parsed;
+                    return true;
+                default:
+                    try
+                    {
+                        result = Convert.ToDouble(value, CultureInfo.InvariantCulture);
+                        return true;
+                    }
+                    catch
+                    {
+                        result = 0;
+                        return false;
+                    }
+            }
         }
 
         private void ConvertFromMiniCurrency(string fromCode)
