@@ -649,9 +649,39 @@ namespace Notepads.Views.MainPage
             // PointerPressed is handled, so TextBox should not enter normal edit mode.
         }
 
+        private bool TryGetMiniCurrencyCalculatorActiveTextBox(out TextBox textBox)
+        {
+            if (_miniCurrencyInputs.TryGetValue(_miniCurrencyActiveCode, out textBox) && IsMiniCurrencyVisible(_miniCurrencyActiveCode))
+            {
+                return true;
+            }
+
+            if (CurrencyRowsHost != null)
+            {
+                foreach (var child in CurrencyRowsHost.Children)
+                {
+                    if (!(child is FrameworkElement row) || !(row.Tag is string code))
+                    {
+                        continue;
+                    }
+
+                    if (!IsMiniCurrencyVisible(code) || !_miniCurrencyInputs.TryGetValue(code, out textBox))
+                    {
+                        continue;
+                    }
+
+                    ActivateMiniCurrencyInput(code);
+                    return true;
+                }
+            }
+
+            textBox = null;
+            return false;
+        }
+
         private void MiniCurrency_CoreWindow_CharacterReceived(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CharacterReceivedEventArgs args)
         {
-            if (!IsMiniCurrencyMode || !_miniCurrencyInputs.TryGetValue(_miniCurrencyActiveCode, out var textBox) || !IsMiniCurrencyVisible(_miniCurrencyActiveCode))
+            if (!IsMiniCurrencyMode || !TryGetMiniCurrencyCalculatorActiveTextBox(out var textBox))
             {
                 return;
             }
@@ -724,7 +754,15 @@ namespace Notepads.Views.MainPage
                 case VirtualKey.F1:
                     if (App.IsPrimaryInstance && !App.IsGameBarWidget && RootSplitView != null)
                     {
-                        RootSplitView.IsPaneOpen = !RootSplitView.IsPaneOpen;
+                        if (RootSplitView.IsPaneOpen)
+                        {
+                            RootSplitView.IsPaneOpen = false;
+                        }
+                        else
+                        {
+                            OpenSettingsPane();
+                        }
+
                         args.Handled = true;
                     }
 
@@ -746,7 +784,7 @@ namespace Notepads.Views.MainPage
 
                     return;
                 case VirtualKey.Enter:
-                    if (_miniCurrencyInputs.TryGetValue(_miniCurrencyActiveCode, out var activeTextBox) && IsMiniCurrencyVisible(_miniCurrencyActiveCode))
+                    if (TryGetMiniCurrencyCalculatorActiveTextBox(out var activeTextBox))
                     {
                         EvaluateMiniCurrencyExpression(activeTextBox);
                         args.Handled = true;
@@ -755,71 +793,127 @@ namespace Notepads.Views.MainPage
                     return;
             }
 
-            if (!_miniCurrencyInputs.TryGetValue(_miniCurrencyActiveCode, out var textBox) || !IsMiniCurrencyVisible(_miniCurrencyActiveCode))
+            if (!TryGetMiniCurrencyCalculatorActiveTextBox(out var textBox))
             {
                 return;
             }
 
             if (args.VirtualKey == VirtualKey.Back)
             {
-                var current = (textBox.Text ?? string.Empty).Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
-                if (_miniCurrencyReplaceOnNextInput)
-                {
-                    textBox.Text = "0";
-                    _miniCurrencyReplaceOnNextInput = true;
-                    ResetMiniCurrencyDeferredExpression();
-                    SetMiniCurrencyStatus("0");
-                    ConvertFromMiniCurrency(_miniCurrencyActiveCode);
-                    SaveMiniCurrencyValues();
-                    args.Handled = true;
-                    return;
-                }
-
-                if (current.Length > 0)
-                {
-                    textBox.Text = current.Substring(0, current.Length - 1);
-                }
-                else
-                {
-                    textBox.Text = "0";
-                }
-
-                if (string.IsNullOrWhiteSpace(textBox.Text))
-                {
-                    textBox.Text = "0";
-                    _miniCurrencyReplaceOnNextInput = true;
-                    ResetMiniCurrencyDeferredExpression();
-                }
-
-                if (IsMiniCurrencyExpressionText(textBox.Text))
-                {
-                    SetMiniCurrencyStatus(textBox.Text ?? string.Empty);
-                }
-                else
-                {
-                    ConvertFromMiniCurrency(_miniCurrencyActiveCode);
-                }
-
-                if (!IsMiniCurrencyExpressionText(textBox.Text))
-                {
-                    textBox.Text = FormatMiniCurrencyLiveInputText(textBox.Text);
-                }
-
-                SaveMiniCurrencyValues();
+                ApplyMiniCurrencyCalculatorBackspace(textBox);
                 args.Handled = true;
                 return;
             }
 
             if (args.VirtualKey == VirtualKey.Delete)
             {
+                ApplyMiniCurrencyCalculatorClear(textBox);
+                args.Handled = true;
+            }
+        }
+
+        private void MiniCurrencyCalculatorButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is Button button))
+            {
+                return;
+            }
+
+            if (!TryGetMiniCurrencyCalculatorActiveTextBox(out var textBox))
+            {
+                return;
+            }
+
+            var token = (button.Tag as string)?.Trim();
+            if (string.IsNullOrEmpty(token))
+            {
+                return;
+            }
+
+            if (string.Equals(token, "Backspace", StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyMiniCurrencyCalculatorBackspace(textBox);
+                return;
+            }
+
+            if (string.Equals(token, "AC", StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyMiniCurrencyCalculatorClear(textBox);
+                return;
+            }
+
+            if (token == "=")
+            {
+                EvaluateMiniCurrencyExpression(textBox);
+                return;
+            }
+
+            if (token.Length == 1)
+            {
+                AppendMiniCurrencyCalculatorToken(textBox, token[0]);
+            }
+        }
+
+        private void ApplyMiniCurrencyCalculatorClear(TextBox textBox)
+        {
+            if (textBox == null)
+            {
+                return;
+            }
+
+            textBox.Text = "0";
+            _miniCurrencyReplaceOnNextInput = true;
+            ResetMiniCurrencyDeferredExpression();
+            SetMiniCurrencyStatus("0");
+            ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+            SaveMiniCurrencyValues();
+        }
+
+        private void ApplyMiniCurrencyCalculatorBackspace(TextBox textBox)
+        {
+            if (textBox == null)
+            {
+                return;
+            }
+
+            var current = (textBox.Text ?? string.Empty).Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+            if (_miniCurrencyReplaceOnNextInput)
+            {
+                ApplyMiniCurrencyCalculatorClear(textBox);
+                return;
+            }
+
+            if (current.Length > 0)
+            {
+                textBox.Text = current.Substring(0, current.Length - 1);
+            }
+            else
+            {
+                textBox.Text = "0";
+            }
+
+            if (string.IsNullOrWhiteSpace(textBox.Text))
+            {
                 textBox.Text = "0";
                 _miniCurrencyReplaceOnNextInput = true;
                 ResetMiniCurrencyDeferredExpression();
-                SetMiniCurrencyStatus("0");
-                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
-                SaveMiniCurrencyValues();
-                args.Handled = true;
             }
+
+            if (IsMiniCurrencyExpressionText(textBox.Text))
+            {
+                SetMiniCurrencyStatus(textBox.Text ?? string.Empty);
+            }
+            else
+            {
+                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+            }
+
+            if (!IsMiniCurrencyExpressionText(textBox.Text))
+            {
+                textBox.Text = FormatMiniCurrencyLiveInputText(textBox.Text);
+            }
+
+            SaveMiniCurrencyValues();
         }
 
         private void CurrencyInput_TextChanged(object sender, TextChangedEventArgs e)

@@ -39,6 +39,13 @@ namespace Notepads.Views.MainPage
         private const double MiniCurrencyBaseAddControlsGap = 10;
         private const double MiniCurrencyBaseStatusFontSize = 12;
         private const double MiniCurrencyBaseStatusMarginTop = 8;
+        private const double MiniCurrencyBaseCalculatorButtonFontSize = 22;
+        private const double MiniCurrencyBaseCalculatorColumnGap = 7;
+        private const double MiniCurrencyBaseCalculatorRowGap = 6;
+        private const double MiniCurrencyBaseCalculatorSeparatorPadding = 12;
+        private const double MiniCurrencyBaseCalculatorBottomPadding = 16;
+        private const double MiniCurrencyBaseHorizontalLayoutMargin = 36;
+        private const double MiniCurrencyBaseTopLayoutMargin = 16;
         private static readonly Color MiniCurrencyAdaptiveTextDarkColor = Color.FromArgb(255, 0x3E, 0x3E, 0x3E);
         private static readonly Color MiniCurrencyAdaptiveTextLightColor = Color.FromArgb(255, 0xF2, 0xF2, 0xF2);
 
@@ -659,13 +666,24 @@ namespace Notepads.Views.MainPage
             }
 
             var factor = GetMiniCurrencyUiScaleFactor(AppSettingsService.MiniCurrencyUiScalePercent);
+            var horizontalMargin = ScaleMetric(MiniCurrencyBaseHorizontalLayoutMargin, factor);
 
             foreach (var row in _miniCurrencyRows.Values)
             {
                 ApplyMiniCurrencyUiScaleToRow(row, factor);
             }
 
+            if (MiniCurrencyMainLayoutGrid != null)
+            {
+                MiniCurrencyMainLayoutGrid.Margin = new Thickness(
+                    horizontalMargin,
+                    ScaleMetric(MiniCurrencyBaseTopLayoutMargin, factor),
+                    horizontalMargin,
+                    0);
+            }
+
             ApplyMiniCurrencyUiScaleToExtraControls(factor);
+            UpdateMiniCurrencyRowWidths();
         }
 
         private void ApplyMiniCurrencyUiScaleToRow(FrameworkElement rowElement)
@@ -753,6 +771,7 @@ namespace Notepads.Views.MainPage
             }
             if (input != null)
             {
+                input.MinWidth = 0;
                 input.Height = ScaleMetric(MiniCurrencyBaseRowHeight, factor);
                 input.FontSize = ScaleMetric(MiniCurrencyBaseValueFontSize, factor);
                 input.Padding = ScaleThickness(
@@ -808,6 +827,228 @@ namespace Notepads.Views.MainPage
                 CurrencyStatusText.Margin = new Thickness(0, ScaleMetric(MiniCurrencyBaseStatusMarginTop, factor), 0, 0);
                 CurrencyStatusText.FontSize = ScaleMetric(MiniCurrencyBaseStatusFontSize, factor);
             }
+
+            ApplyMiniCurrencyUiScaleToCalculator(factor);
+            UpdateMiniCurrencyCurrencyRowsBottomPadding();
+        }
+
+        private void MiniCurrencyCalculatorHost_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateMiniCurrencyCurrencyRowsBottomPadding();
+            UpdateMiniCurrencyCalculatorRowWidths();
+        }
+
+        private void MiniCurrencyMainLayoutGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateMiniCurrencyRowWidths();
+            UpdateMiniCurrencyCalculatorRowWidths();
+        }
+
+        private void CurrencyRowsViewport_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateMiniCurrencyRowWidths();
+        }
+
+        private void UpdateMiniCurrencyCurrencyRowsBottomPadding()
+        {
+            if (CurrencyRowsHost == null)
+            {
+                return;
+            }
+
+            var current = CurrencyRowsHost.Margin;
+            CurrencyRowsHost.Margin = new Thickness(current.Left, current.Top, current.Right, 0);
+        }
+
+        private void UpdateMiniCurrencyRowWidths()
+        {
+            if (_miniCurrencyRows == null)
+            {
+                return;
+            }
+
+            var factor = GetMiniCurrencyUiScaleFactor(AppSettingsService.MiniCurrencyUiScalePercent);
+            var width = GetMiniCurrencyContentWidth(factor);
+            if (width <= 0)
+            {
+                return;
+            }
+
+            if (CurrencyRowsScrollViewer != null)
+            {
+                CurrencyRowsScrollViewer.Width = width;
+                CurrencyRowsScrollViewer.HorizontalAlignment = HorizontalAlignment.Left;
+            }
+
+            if (CurrencyRowsHost != null)
+            {
+                CurrencyRowsHost.Width = width;
+                CurrencyRowsHost.HorizontalAlignment = HorizontalAlignment.Left;
+            }
+
+            if (CurrencyRowsViewport != null)
+            {
+                CurrencyRowsViewport.Width = width;
+                CurrencyRowsViewport.HorizontalAlignment = HorizontalAlignment.Left;
+            }
+
+            foreach (var row in _miniCurrencyRows.Values)
+            {
+                if (row != null)
+                {
+                    row.Width = width;
+                    row.HorizontalAlignment = HorizontalAlignment.Left;
+                }
+            }
+        }
+
+        private void ApplyMiniCurrencyUiScaleToCalculator(double factor)
+        {
+            if (MiniCurrencyCalculatorHost == null)
+            {
+                return;
+            }
+
+            var buttonHeight = ScaleMetric(MiniCurrencyBaseRowHeight, factor);
+            var gapWidth = ScaleMetric(MiniCurrencyBaseCalculatorColumnGap, factor);
+            var rowGap = ScaleMetric(MiniCurrencyBaseCalculatorRowGap, factor);
+            var cornerRadius = new CornerRadius(ScaleMetric(MiniCurrencyBaseLeftCardCornerRadius, factor));
+            var buttonFontSize = ScaleMetric(MiniCurrencyBaseCalculatorButtonFontSize, factor);
+
+            if (MiniCurrencyCalculatorHost.RowDefinitions.Count >= 5)
+            {
+                MiniCurrencyCalculatorHost.RowDefinitions[0].Height = new GridLength(ScaleMetric(MiniCurrencyBaseCalculatorSeparatorPadding, factor));
+                MiniCurrencyCalculatorHost.RowDefinitions[2].Height = new GridLength(ScaleMetric(MiniCurrencyBaseCalculatorSeparatorPadding, factor));
+                MiniCurrencyCalculatorHost.RowDefinitions[4].Height = new GridLength(ScaleMetric(MiniCurrencyBaseCalculatorBottomPadding, factor));
+            }
+
+            ApplyMiniCurrencyCalculatorStandardRowLayout(MiniCurrencyCalculatorRow1Grid, gapWidth, rowGap);
+            ApplyMiniCurrencyCalculatorStandardRowLayout(MiniCurrencyCalculatorRow2Grid, gapWidth, rowGap);
+            ApplyMiniCurrencyCalculatorStandardRowLayout(MiniCurrencyCalculatorRow3Grid, gapWidth, rowGap);
+            ApplyMiniCurrencyCalculatorStandardRowLayout(MiniCurrencyCalculatorRow4Grid, gapWidth, rowGap);
+
+            if (MiniCurrencyCalculatorRow5Grid != null)
+            {
+                MiniCurrencyCalculatorRow5Grid.Margin = new Thickness(0);
+                if (MiniCurrencyCalculatorRow5Grid.ColumnDefinitions.Count >= 7)
+                {
+                    MiniCurrencyCalculatorRow5Grid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+                    MiniCurrencyCalculatorRow5Grid.ColumnDefinitions[1].Width = new GridLength(gapWidth);
+                    MiniCurrencyCalculatorRow5Grid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
+                    MiniCurrencyCalculatorRow5Grid.ColumnDefinitions[3].Width = new GridLength(gapWidth);
+                    MiniCurrencyCalculatorRow5Grid.ColumnDefinitions[4].Width = new GridLength(1, GridUnitType.Star);
+                    MiniCurrencyCalculatorRow5Grid.ColumnDefinitions[5].Width = new GridLength(gapWidth);
+                    MiniCurrencyCalculatorRow5Grid.ColumnDefinitions[6].Width = new GridLength(1, GridUnitType.Star);
+                }
+            }
+
+            var calculatorButtons = new[]
+            {
+                MiniCurrencyCalcBackspaceButton,
+                MiniCurrencyCalcAcButton,
+                MiniCurrencyCalcPercentButton,
+                MiniCurrencyCalcDivideButton,
+                MiniCurrencyCalcDigit7Button,
+                MiniCurrencyCalcDigit8Button,
+                MiniCurrencyCalcDigit9Button,
+                MiniCurrencyCalcMultiplyButton,
+                MiniCurrencyCalcDigit4Button,
+                MiniCurrencyCalcDigit5Button,
+                MiniCurrencyCalcDigit6Button,
+                MiniCurrencyCalcMinusButton,
+                MiniCurrencyCalcDigit1Button,
+                MiniCurrencyCalcDigit2Button,
+                MiniCurrencyCalcDigit3Button,
+                MiniCurrencyCalcPlusButton,
+                MiniCurrencyCalcDigit0Button,
+                MiniCurrencyCalcCommaButton,
+                MiniCurrencyCalcEqualsButton
+            };
+
+            foreach (var button in calculatorButtons)
+            {
+                if (button == null)
+                {
+                    continue;
+                }
+
+                button.Height = buttonHeight;
+                button.CornerRadius = cornerRadius;
+                button.FontSize = buttonFontSize;
+            }
+
+            UpdateMiniCurrencyCalculatorRowWidths();
+        }
+
+        private static void ApplyMiniCurrencyCalculatorStandardRowLayout(Grid row, double gapWidth, double rowGap)
+        {
+            if (row == null)
+            {
+                return;
+            }
+
+            row.Margin = new Thickness(0, 0, 0, rowGap);
+            if (row.ColumnDefinitions.Count < 7)
+            {
+                return;
+            }
+
+            row.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+            row.ColumnDefinitions[1].Width = new GridLength(gapWidth);
+            row.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
+            row.ColumnDefinitions[3].Width = new GridLength(gapWidth);
+            row.ColumnDefinitions[4].Width = new GridLength(1, GridUnitType.Star);
+            row.ColumnDefinitions[5].Width = new GridLength(gapWidth);
+            row.ColumnDefinitions[6].Width = new GridLength(1, GridUnitType.Star);
+        }
+
+        private void UpdateMiniCurrencyCalculatorRowWidths()
+        {
+            if (MiniCurrencyCalculatorHost == null)
+            {
+                return;
+            }
+
+            var factor = GetMiniCurrencyUiScaleFactor(AppSettingsService.MiniCurrencyUiScalePercent);
+            var width = GetMiniCurrencyContentWidth(factor);
+            if (width <= 0)
+            {
+                return;
+            }
+
+            MiniCurrencyCalculatorHost.Width = width;
+            MiniCurrencyCalculatorHost.HorizontalAlignment = HorizontalAlignment.Left;
+
+            var rows = new[]
+            {
+                MiniCurrencyCalculatorRow1Grid,
+                MiniCurrencyCalculatorRow2Grid,
+                MiniCurrencyCalculatorRow3Grid,
+                MiniCurrencyCalculatorRow4Grid,
+                MiniCurrencyCalculatorRow5Grid
+            };
+
+            foreach (var row in rows)
+            {
+                if (row == null)
+                {
+                    continue;
+                }
+
+                row.Width = width;
+                row.HorizontalAlignment = HorizontalAlignment.Left;
+            }
+        }
+
+        private double GetMiniCurrencyContentWidth(double factor)
+        {
+            if (Window.Current == null)
+            {
+                return 0;
+            }
+
+            var horizontalMargin = ScaleMetric(MiniCurrencyBaseHorizontalLayoutMargin, factor);
+            return Math.Max(1, Window.Current.Bounds.Width - (horizontalMargin * 2));
         }
 
         private static double GetMiniCurrencyUiScaleFactor(int percent)

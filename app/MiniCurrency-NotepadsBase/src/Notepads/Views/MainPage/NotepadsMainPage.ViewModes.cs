@@ -21,6 +21,11 @@ namespace Notepads.Views.MainPage
         // Reset TitleBarReservedArea accordingly
         private void WindowSizeChanged(object sender, Windows.UI.Core.WindowSizeChangedEventArgs e)
         {
+            if (IsMiniCurrencyMode)
+            {
+                ApplyMiniCurrencyUiScale();
+            }
+
             if (ApplicationView.GetForCurrentView().ViewMode == ApplicationViewMode.CompactOverlay)
             {
                 if (ExitCompactOverlayButton.Visibility == Visibility.Collapsed)

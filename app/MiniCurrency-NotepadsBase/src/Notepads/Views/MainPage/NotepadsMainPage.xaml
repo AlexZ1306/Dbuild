@@ -17,12 +17,15 @@
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="MiniCurrencyPickerPanelBackgroundBrush" Color="WhiteSmoke"/>
+                    <x:Double x:Key="TextControlThemeMinWidth">0</x:Double>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="MiniCurrencyPickerPanelBackgroundBrush" Color="#222222"/>
+                    <x:Double x:Key="TextControlThemeMinWidth">0</x:Double>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="HighContrast">
                     <SolidColorBrush x:Key="MiniCurrencyPickerPanelBackgroundBrush" Color="{StaticResource SystemColorHighlightColor}"/>
+                    <x:Double x:Key="TextControlThemeMinWidth">0</x:Double>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
@@ -274,14 +277,32 @@
                           PointerReleased="CurrencyRowsViewport_PointerReleased"
                           PointerCanceled="CurrencyRowsViewport_PointerCanceled">
                         <Grid.Resources>
+                            <x:Double x:Key="TextControlThemeMinWidth">0</x:Double>
                             <SolidColorBrush x:Key="TextControlBackground" Color="#3A3A3A"/>
                             <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#424242"/>
                             <SolidColorBrush x:Key="TextControlForeground" Color="White"/>
                             <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="White"/>
                             <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#C99D4F"/>
                             <Thickness x:Key="MiniCurrencyFlagCodeGapMargin">0,0,14,0</Thickness>
+                            <Style x:Key="MiniCurrencyCalculatorButtonBaseStyle" TargetType="Button">
+                                <Setter Property="Height" Value="56"/>
+                                <Setter Property="MinWidth" Value="0"/>
+                                <Setter Property="MinHeight" Value="0"/>
+                                <Setter Property="Background" Value="#FF3A3A3A"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="CornerRadius" Value="14"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="FontSize" Value="22"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                <Setter Property="VerticalAlignment" Value="Stretch"/>
+                            </Style>
                         </Grid.Resources>
-                        <Grid Margin="36,16,36,0">
+                        <Grid x:Name="MiniCurrencyMainLayoutGrid"
+                              SizeChanged="MiniCurrencyMainLayoutGrid_SizeChanged"
+                              Margin="36,16,36,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
@@ -296,19 +317,29 @@
                                        Margin="10,0,0,12"
                                        Visibility="Collapsed"/>
 
-                            <ScrollViewer Grid.Row="1"
-                                          x:Name="CurrencyRowsScrollViewer"
-                                          VerticalAlignment="Stretch"
-                                          VerticalScrollBarVisibility="Hidden"
-                                          HorizontalScrollBarVisibility="Disabled"
-                                          ZoomMode="Disabled"
-                                          Padding="0">
-                                <Grid x:Name="CurrencyRowsViewport"
-                                      Background="Transparent"
-                                      PointerMoved="CurrencyRowsViewport_PointerMoved"
-                                      PointerReleased="CurrencyRowsViewport_PointerReleased"
-                                      PointerCanceled="CurrencyRowsViewport_PointerCanceled">
-                                    <StackPanel x:Name="CurrencyRowsHost">
+                            <Grid Grid.Row="1">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <ScrollViewer Grid.Row="0"
+                                              x:Name="CurrencyRowsScrollViewer"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch"
+                                              VerticalScrollBarVisibility="Hidden"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              ZoomMode="Disabled"
+                                              Padding="0">
+                                    <Grid x:Name="CurrencyRowsViewport"
+                                          HorizontalAlignment="Stretch"
+                                          Background="Transparent"
+                                          SizeChanged="CurrencyRowsViewport_SizeChanged"
+                                          PointerMoved="CurrencyRowsViewport_PointerMoved"
+                                          PointerReleased="CurrencyRowsViewport_PointerReleased"
+                                          PointerCanceled="CurrencyRowsViewport_PointerCanceled">
+                                        <StackPanel x:Name="CurrencyRowsHost"
+                                                    HorizontalAlignment="Stretch">
                                         <StackPanel.ChildrenTransitions>
                                             <TransitionCollection>
                                                 <ReorderThemeTransition/>
@@ -493,9 +524,122 @@
                                             <TextBox Grid.Column="2" x:Name="InputCNY" Tag="CNY" Height="56" Text="" HorizontalContentAlignment="Right" TextAlignment="Right" VerticalContentAlignment="Center" FontSize="24" Padding="16,0" Background="#CC3A3A3A" BorderBrush="#10FFFFFF" BorderThickness="1" CornerRadius="16" Style="{StaticResource TransparentTextBoxStyle}" IsReadOnly="True" IsTabStop="False" IsHitTestVisible="False" TextChanged="CurrencyInput_TextChanged" GotFocus="CurrencyInput_GotFocus"/>
                                             <Button Grid.Column="3" Tag="CNY" Content="×" Height="34" Width="34" VerticalAlignment="Center" Margin="8,0,0,0" Background="Transparent" BorderThickness="0" Opacity="0.7" Click="CurrencyRemoveButton_Click" Visibility="Collapsed"/>
                                         </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </ScrollViewer>
+
+                                <Grid Grid.Row="1"
+                                      x:Name="MiniCurrencyCalculatorHost"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      Visibility="Visible"
+                                      Background="Transparent"
+                                      SizeChanged="MiniCurrencyCalculatorHost_SizeChanged">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="8"/>
+                                        <RowDefinition Height="0"/>
+                                        <RowDefinition Height="12"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="16"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="3"
+                                                HorizontalAlignment="Stretch">
+                                        <Grid x:Name="MiniCurrencyCalculatorRow1Grid"
+                                              HorizontalAlignment="Stretch"
+                                              Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button x:Name="MiniCurrencyCalcBackspaceButton" Grid.Column="0" Tag="Backspace" Content="⌫" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcAcButton" Grid.Column="2" Tag="AC" Content="AC" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcPercentButton" Grid.Column="4" Tag="%" Content="%" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcDivideButton" Grid.Column="6" Tag="/" Content="÷" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                        </Grid>
+
+                                        <Grid x:Name="MiniCurrencyCalculatorRow2Grid"
+                                              HorizontalAlignment="Stretch"
+                                              Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button x:Name="MiniCurrencyCalcDigit7Button" Grid.Column="0" Tag="7" Content="7" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcDigit8Button" Grid.Column="2" Tag="8" Content="8" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcDigit9Button" Grid.Column="4" Tag="9" Content="9" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcMultiplyButton" Grid.Column="6" Tag="*" Content="×" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                        </Grid>
+
+                                        <Grid x:Name="MiniCurrencyCalculatorRow3Grid"
+                                              HorizontalAlignment="Stretch"
+                                              Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button x:Name="MiniCurrencyCalcDigit4Button" Grid.Column="0" Tag="4" Content="4" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcDigit5Button" Grid.Column="2" Tag="5" Content="5" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcDigit6Button" Grid.Column="4" Tag="6" Content="6" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcMinusButton" Grid.Column="6" Tag="-" Content="−" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                        </Grid>
+
+                                        <Grid x:Name="MiniCurrencyCalculatorRow4Grid"
+                                              HorizontalAlignment="Stretch"
+                                              Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button x:Name="MiniCurrencyCalcDigit1Button" Grid.Column="0" Tag="1" Content="1" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcDigit2Button" Grid.Column="2" Tag="2" Content="2" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcDigit3Button" Grid.Column="4" Tag="3" Content="3" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcPlusButton" Grid.Column="6" Tag="+" Content="+" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                        </Grid>
+
+                                        <Grid x:Name="MiniCurrencyCalculatorRow5Grid"
+                                              HorizontalAlignment="Stretch">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="7"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button x:Name="MiniCurrencyCalcDigit0Button" Grid.Column="0" Grid.ColumnSpan="3" Tag="0" Content="0" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcCommaButton" Grid.Column="4" Tag="," Content="," Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcEqualsButton" Grid.Column="6" Tag="=" Content="=" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                        </Grid>
                                     </StackPanel>
                                 </Grid>
-                            </ScrollViewer>
+                            </Grid>
 
                             <StackPanel Grid.Row="2"
                                         Orientation="Horizontal"

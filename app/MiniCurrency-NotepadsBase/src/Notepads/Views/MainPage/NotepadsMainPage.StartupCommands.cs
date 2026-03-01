@@ -25,6 +25,7 @@ namespace Notepads.Views.MainPage
             RootSplitView.PaneClosed += RootSplitView_PaneClosed;
             if (IsMiniCurrencyMode && RootSplitView != null)
             {
+                ApplyMiniCurrencyPreferredMinWindowSize();
                 _miniCurrencySettingsPaneWidth = RootSplitView.OpenPaneLength;
                 _miniCurrencyCurrencyPickerPaneWidth = System.Math.Max(240, _miniCurrencySettingsPaneWidth - MiniCurrencyPickerPaneWidthReduction);
             }
@@ -55,7 +56,7 @@ namespace Notepads.Views.MainPage
             _miniCurrencyCurrencyPickerSourceCode = null;
             _miniCurrencyCurrencyPickerMode = MiniCurrencyCurrencyPickerMode.ReplaceRowCurrency;
             ShowSettingsPaneContent();
-            ApplyMiniCurrencyRightPaneWidthForCurrentMode();
+            RestoreMiniCurrencyWindowWidthAfterPaneClosed();
 
             if (!IsMiniCurrencyMode)
             {
@@ -100,7 +101,21 @@ namespace Notepads.Views.MainPage
                     new KeyboardCommand<KeyRoutedEventArgs>(VirtualKey.F2, async (args) => await OpenMiniCurrencyCurrencyManagementPaneAsync()),
                     new KeyboardCommand<KeyRoutedEventArgs>(VirtualKey.F5, async (args) => await LoadMiniCurrencyRatesAsync(silent: false)),
                     new KeyboardCommand<KeyRoutedEventArgs>(VirtualKey.Escape, (args) => { if (RootSplitView.IsPaneOpen) RootSplitView.IsPaneOpen = false; }),
-                    new KeyboardCommand<KeyRoutedEventArgs>(VirtualKey.F1, (args) => { if (App.IsPrimaryInstance && !App.IsGameBarWidget) RootSplitView.IsPaneOpen = !RootSplitView.IsPaneOpen; })
+                    new KeyboardCommand<KeyRoutedEventArgs>(VirtualKey.F1, (args) =>
+                    {
+                        if (!App.IsPrimaryInstance || App.IsGameBarWidget)
+                        {
+                            return;
+                        }
+
+                        if (RootSplitView.IsPaneOpen)
+                        {
+                            RootSplitView.IsPaneOpen = false;
+                            return;
+                        }
+
+                        OpenSettingsPane();
+                    })
                 });
                 return;
             }

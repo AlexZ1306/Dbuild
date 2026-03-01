@@ -35,6 +35,8 @@ namespace Notepads.Views.MainPage
         private const int MiniCurrencyCalculatorMaxDigitsPerNumber = 16;
         private const int MiniCurrencyCalculatorMaxExpressionLength = 64;
         private const double MiniCurrencyCalculatorMaxAbsoluteValue = 9_999_999_999_999_999d;
+        private const double MiniCurrencyPreferredMinWindowWidth = 350;
+        private const double MiniCurrencyPaneWidthSafetyPadding = 24;
 
         private readonly Dictionary<string, double> _miniCurrencyRates = new Dictionary<string, double>()
         {
@@ -89,6 +91,7 @@ namespace Notepads.Views.MainPage
         private DateTimeOffset _miniCurrencyIgnoreRowTapUntilUtc = DateTimeOffset.MinValue;
         private string _miniCurrencyActiveCode = "KZT";
         private string _miniCurrencyLatestStatusText = "Загрузка курсов...";
+        private double _miniCurrencyWindowWidthBeforePaneOpen = -1;
         private MenuFlyoutItem _miniCurrencyRefreshRatesMenuItem;
         private readonly Dictionary<string, string> _miniCurrencyDisplayNames = new Dictionary<string, string>()
         {

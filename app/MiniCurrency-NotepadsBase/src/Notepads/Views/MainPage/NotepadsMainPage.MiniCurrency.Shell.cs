@@ -10,10 +10,12 @@ namespace Notepads.Views.MainPage
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using Windows.Foundation;
     using Windows.Data.Json;
     using Windows.Globalization;
     using Windows.Storage;
     using Windows.UI;
+    using Windows.UI.ViewManagement;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
@@ -67,6 +69,7 @@ namespace Notepads.Views.MainPage
             _miniCurrencyCurrencyPickerMode = MiniCurrencyCurrencyPickerMode.ReplaceRowCurrency;
             _miniCurrencyCurrencyPickerSourceCode = null;
             _miniCurrencyRightPaneMode = MiniCurrencyRightPaneMode.Settings;
+            EnsureMiniCurrencyWindowWidthForOpenPane();
             ApplyMiniCurrencyRightPaneWidthForCurrentMode();
             ShowSettingsPaneContent();
             RootSplitView.IsPaneOpen = true;
@@ -79,14 +82,24 @@ namespace Notepads.Views.MainPage
                 return;
             }
 
-            var targetWidth = _miniCurrencyRightPaneMode == MiniCurrencyRightPaneMode.CurrencyPicker
-                ? _miniCurrencyCurrencyPickerPaneWidth
-                : _miniCurrencySettingsPaneWidth;
+            var targetWidth = GetMiniCurrencyDesiredPaneWidthForCurrentMode();
+            if (Window.Current != null)
+            {
+                var maxAllowedPaneWidth = Math.Max(240, Window.Current.Bounds.Width - MiniCurrencyPaneWidthSafetyPadding);
+                targetWidth = Math.Min(targetWidth, maxAllowedPaneWidth);
+            }
 
             if (targetWidth > 0)
             {
                 RootSplitView.OpenPaneLength = targetWidth;
             }
+        }
+
+        private double GetMiniCurrencyDesiredPaneWidthForCurrentMode()
+        {
+            return _miniCurrencyRightPaneMode == MiniCurrencyRightPaneMode.CurrencyPicker
+                ? _miniCurrencyCurrencyPickerPaneWidth
+                : _miniCurrencySettingsPaneWidth;
         }
 
         private string GetMiniCurrencyFlagAssetCode(string code)
@@ -110,6 +123,7 @@ namespace Notepads.Views.MainPage
             _miniCurrencyCurrencyPickerMode = MiniCurrencyCurrencyPickerMode.ReplaceRowCurrency;
             _miniCurrencyCurrencyPickerSourceCode = sourceCode;
             _miniCurrencyRightPaneMode = MiniCurrencyRightPaneMode.CurrencyPicker;
+            EnsureMiniCurrencyWindowWidthForOpenPane();
             ApplyMiniCurrencyRightPaneWidthForCurrentMode();
 
             _miniCurrencyCurrencyPickerSearchQuery = string.Empty;
@@ -128,6 +142,7 @@ namespace Notepads.Views.MainPage
             _miniCurrencyCurrencyPickerMode = MiniCurrencyCurrencyPickerMode.ToggleMainVisibility;
             _miniCurrencyCurrencyPickerSourceCode = null;
             _miniCurrencyRightPaneMode = MiniCurrencyRightPaneMode.CurrencyPicker;
+            EnsureMiniCurrencyWindowWidthForOpenPane();
             ApplyMiniCurrencyRightPaneWidthForCurrentMode();
 
             _miniCurrencyCurrencyPickerSearchQuery = string.Empty;
@@ -139,6 +154,26 @@ namespace Notepads.Views.MainPage
             await EnsureMiniCurrencyCurrencyPickerListLoadedAsync();
             ShowMiniCurrencyCurrencyPickerPaneContent();
             RootSplitView.IsPaneOpen = true;
+        }
+
+        private void ApplyMiniCurrencyPreferredMinWindowSize()
+        {
+            if (!IsMiniCurrencyMode || App.IsGameBarWidget)
+            {
+                return;
+            }
+
+            ApplicationView.GetForCurrentView().SetPreferredMinSize(new Size(MiniCurrencyPreferredMinWindowWidth, 320));
+        }
+
+        private void EnsureMiniCurrencyWindowWidthForOpenPane()
+        {
+            // Keep window width stable; pane width is clamped to available space.
+        }
+
+        private void RestoreMiniCurrencyWindowWidthAfterPaneClosed()
+        {
+            _miniCurrencyWindowWidthBeforePaneOpen = -1;
         }
 
         private async Task EnsureMiniCurrencyCurrencyPickerListLoadedAsync()
