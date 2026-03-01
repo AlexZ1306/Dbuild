@@ -1,0 +1,840 @@
+// ---------------------------------------------------------------------------------------------
+//  Copyright (c) 2019-2024, Jiaqi (0x7c13) Liu. All rights reserved.
+//  See LICENSE file in the project root for license information.
+// ---------------------------------------------------------------------------------------------
+
+namespace Notepads.Views.MainPage
+{
+    using Notepads.Services;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Windows.Data.Json;
+    using Windows.Storage;
+    using Windows.UI;
+    using Windows.UI.Xaml;
+    using Windows.UI.Xaml.Controls;
+    using Windows.UI.Xaml.Media;
+    using Windows.UI.Xaml.Media.Imaging;
+
+    public sealed partial class NotepadsMainPage
+    {
+        private const double MiniCurrencyUiScaleMinFactor = 0.5;
+        private const double MiniCurrencyUiScaleMaxFactor = 1.5;
+        private const double MiniCurrencyBaseRowHeight = 56;
+        private const double MiniCurrencyBaseRowSpacing = 12;
+        private const double MiniCurrencyBaseLeftColumnWidth = 132;
+        private const double MiniCurrencyBaseMiddleGapWidth = 14;
+        private const double MiniCurrencyBaseLeftCardCornerRadius = 14;
+        private const double MiniCurrencyBaseValueCardCornerRadius = 16;
+        private const double MiniCurrencyBaseFlagSize = 30;
+        private const double MiniCurrencyBaseFlagCornerRadius = 15;
+        private const double MiniCurrencyBaseFlagCodeGap = 14;
+        private const double MiniCurrencyBaseCodeFontSize = 18;
+        private const double MiniCurrencyBaseValueFontSize = 24;
+        private const double MiniCurrencyBaseFieldHorizontalPadding = 16;
+        private const double MiniCurrencyBaseRemoveButtonSize = 34;
+        private const double MiniCurrencyBaseRemoveButtonLeftMargin = 8;
+        private const double MiniCurrencyBaseAddControlsHeight = 42;
+        private const double MiniCurrencyBaseAddControlsGap = 10;
+        private const double MiniCurrencyBaseStatusFontSize = 12;
+        private const double MiniCurrencyBaseStatusMarginTop = 8;
+        private static readonly Color MiniCurrencyAdaptiveTextDarkColor = Color.FromArgb(255, 0x3E, 0x3E, 0x3E);
+        private static readonly Color MiniCurrencyAdaptiveTextLightColor = Color.FromArgb(255, 0xF2, 0xF2, 0xF2);
+
+        private void RestoreMiniCurrencyValues()
+        {
+            var restoredAny = false;
+
+            try
+            {
+                if (MiniCurrencySettings.Values.TryGetValue(MiniCurrencyValuesKey, out var rawObj) &&
+                    rawObj is string raw &&
+                    !string.IsNullOrWhiteSpace(raw) &&
+                    JsonObject.TryParse(raw, out var valuesObj))
+                {
+                    _miniCurrencyIsUpdating = true;
+                    try
+                    {
+                        foreach (var pair in _miniCurrencyInputs)
+                        {
+                            if (valuesObj.TryGetValue(pair.Key, out var value) && value.ValueType == JsonValueType.String)
+                            {
+                                pair.Value.Text = value.GetString();
+                                restoredAny = true;
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        _miniCurrencyIsUpdating = false;
+                    }
+                }
+            }
+            catch
+            {
+                // ignore and use defaults
+            }
+
+            if (!restoredAny)
+            {
+                _miniCurrencyIsUpdating = true;
+                try
+                {
+                    foreach (var input in _miniCurrencyInputs.Values)
+                    {
+                        input.Text = "0";
+                    }
+                }
+                finally
+                {
+                    _miniCurrencyIsUpdating = false;
+                }
+            }
+        }
+
+        private void SaveMiniCurrencyValues()
+        {
+            try
+            {
+                var valuesObj = new JsonObject();
+                foreach (var pair in _miniCurrencyInputs)
+                {
+                    valuesObj[pair.Key] = JsonValue.CreateStringValue(pair.Value?.Text ?? string.Empty);
+                }
+
+                MiniCurrencySettings.Values[MiniCurrencyValuesKey] = valuesObj.Stringify();
+            }
+            catch
+            {
+                // ignore persistence failures
+            }
+        }
+
+        private void RestoreMiniCurrencyRowOrder()
+        {
+            if (CurrencyRowsHost == null)
+            {
+                return;
+            }
+
+            try
+            {
+                if (!(MiniCurrencySettings.Values.TryGetValue(MiniCurrencyRowOrderKey, out var rawObj) &&
+                    rawObj is string raw &&
+                    !string.IsNullOrWhiteSpace(raw)))
+                {
+                    return;
+                }
+
+                var codes = raw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim().ToUpperInvariant())
+                    .Where(x => _miniCurrencyRows.ContainsKey(x))
+                    .Distinct()
+                    .ToList();
+
+                if (codes.Count == 0)
+                {
+                    return;
+                }
+
+                foreach (var code in _miniCurrencyRows.Keys.Where(x => !codes.Contains(x)))
+                {
+                    codes.Add(code);
+                }
+
+                var orderedRows = codes.Select(code => _miniCurrencyRows[code]).ToList();
+                CurrencyRowsHost.Children.Clear();
+                foreach (var row in orderedRows)
+                {
+                    CurrencyRowsHost.Children.Add(row);
+                }
+            }
+            catch
+            {
+                // ignore and keep default layout order
+            }
+        }
+
+        private void SaveMiniCurrencyRowOrder()
+        {
+            if (CurrencyRowsHost == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var order = CurrencyRowsHost.Children
+                    .OfType<FrameworkElement>()
+                    .Select(x => x.Tag as string)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToArray();
+
+                MiniCurrencySettings.Values[MiniCurrencyRowOrderKey] = string.Join(",", order);
+            }
+            catch
+            {
+                // ignore persistence failures
+            }
+        }
+
+        private void SetMiniCurrencyStatus(string text)
+        {
+            _miniCurrencyLatestStatusText = text ?? string.Empty;
+
+            if (CurrencyStatusText != null)
+            {
+                CurrencyStatusText.Text = _miniCurrencyLatestStatusText;
+            }
+
+            if (EncodingIndicator != null)
+            {
+                EncodingIndicator.Text = _miniCurrencyLatestStatusText;
+            }
+        }
+
+        private void InitializeMiniCurrencyFlags()
+        {
+            // Set SVG sources explicitly for the built-in rows.
+            SetMiniCurrencyFlag(FlagRUB, "RUB");
+            SetMiniCurrencyFlag(FlagKZT, "KZT");
+            SetMiniCurrencyFlag(FlagUSD, "USD");
+            SetMiniCurrencyFlag(FlagTRY, "TRY");
+            SetMiniCurrencyFlag(FlagNOK, "NOK");
+            SetMiniCurrencyFlag(FlagAED, "AED");
+            SetMiniCurrencyFlag(FlagEUR, "EUR");
+            SetMiniCurrencyFlag(FlagGBP, "GBP");
+            SetMiniCurrencyFlag(FlagCNY, "CNY");
+        }
+
+        private async void SetMiniCurrencyFlag(Image image, string code)
+        {
+            if (image == null || string.IsNullOrWhiteSpace(code))
+            {
+                return;
+            }
+
+            PrepareMiniCurrencyFlagImage(image);
+            var normalizedCode = code.Trim().ToUpperInvariant();
+
+            try
+            {
+                var svgSource = new SvgImageSource();
+                ConfigureMiniCurrencyFlagSvgSource(svgSource, image);
+                svgSource.OpenFailed += (s, e) => image.Source = null;
+                svgSource.Opened += (s, e) => MakeMiniCurrencyFlagContainerTransparent(image);
+                svgSource.UriSource = new Uri($"ms-appx:///Assets/Flags/{normalizedCode}.svg");
+                image.Source = svgSource;
+            }
+            catch
+            {
+                var svgSource = new SvgImageSource();
+                ConfigureMiniCurrencyFlagSvgSource(svgSource, image);
+                svgSource.OpenFailed += (s, e) => image.Source = null;
+                svgSource.Opened += (s, e) => MakeMiniCurrencyFlagContainerTransparent(image);
+                svgSource.UriSource = new Uri($"ms-appx:///Assets/Flags/{normalizedCode}.svg");
+                image.Source = svgSource;
+            }
+        }
+
+        private static void PrepareMiniCurrencyFlagImage(Image image)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            image.Stretch = Stretch.Uniform;
+            image.HorizontalAlignment = HorizontalAlignment.Center;
+            image.VerticalAlignment = VerticalAlignment.Center;
+        }
+
+        private static void ConfigureMiniCurrencyFlagSvgSource(SvgImageSource svgSource, Image image)
+        {
+            if (svgSource == null)
+            {
+                return;
+            }
+
+            // Our current SVG assets declare width/height=512 on the root <svg>.
+            // In UWP, requesting a smaller raster can crop the image (top-left corner only).
+            // Keep raster equal to intrinsic size to avoid cropping.
+            svgSource.RasterizePixelWidth = 512;
+            svgSource.RasterizePixelHeight = 512;
+        }
+
+        private static void MakeMiniCurrencyFlagContainerTransparent(Image image)
+        {
+            if (image?.Tag is Border taggedBorder)
+            {
+                taggedBorder.Background = new SolidColorBrush(Colors.Transparent);
+                return;
+            }
+
+            if (image?.Parent is Border border)
+            {
+                border.Background = new SolidColorBrush(Colors.Transparent);
+            }
+        }
+
+        private void SaveMiniCurrencyVisibleCurrencies()
+        {
+            try
+            {
+                var visible = _miniCurrencyRows
+                    .Where(x => x.Value.Visibility == Visibility.Visible)
+                    .Select(x => x.Key)
+                    .ToArray();
+                MiniCurrencySettings.Values[MiniCurrencyVisibleCurrenciesKey] = string.Join(",", visible);
+            }
+            catch
+            {
+                // ignore persistence errors for now
+            }
+        }
+
+        private void RestoreMiniCurrencyVisibleCurrencies()
+        {
+            var visibleCodes = new HashSet<string>(_miniCurrencyDefaultVisible);
+
+            try
+            {
+                if (MiniCurrencySettings.Values.TryGetValue(MiniCurrencyVisibleCurrenciesKey, out var rawObj) &&
+                    rawObj is string raw &&
+                    !string.IsNullOrWhiteSpace(raw))
+                {
+                    var parsed = raw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Trim().ToUpperInvariant())
+                        .Where(x => _miniCurrencyDisplayNames.ContainsKey(x))
+                        .ToHashSet();
+
+                    foreach (var code in parsed)
+                    {
+                        EnsureMiniCurrencyRowExists(code);
+                    }
+                    if (parsed.Count > 0)
+                    {
+                        visibleCodes = parsed;
+                    }
+                }
+            }
+            catch
+            {
+                // ignore and keep defaults
+            }
+
+            foreach (var row in _miniCurrencyRows)
+            {
+                row.Value.Visibility = visibleCodes.Contains(row.Key) ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            if (!visibleCodes.Contains(_miniCurrencyActiveCode))
+            {
+                _miniCurrencyActiveCode = visibleCodes.FirstOrDefault() ?? _miniCurrencyDefaultVisible.First();
+            }
+        }
+
+        private void RebuildMiniCurrencyAddList()
+        {
+            if (CurrencySelectBox == null)
+            {
+                return;
+            }
+
+            CurrencySelectBox.Items.Clear();
+            foreach (var code in _miniCurrencyRows.Keys.OrderBy(x => x))
+            {
+                if (_miniCurrencyRows[code].Visibility == Visibility.Visible)
+                {
+                    continue;
+                }
+
+                CurrencySelectBox.Items.Add(new ComboBoxItem { Content = code });
+            }
+
+            CurrencySelectBox.SelectedIndex = CurrencySelectBox.Items.Count > 0 ? 0 : -1;
+            AddCurrencyButton.IsEnabled = CurrencySelectBox.Items.Count > 0;
+        }
+
+        private void HighlightMiniCurrencyActiveRow(string activeCode)
+        {
+            var activeBackgroundColor = GetMiniCurrencyActiveInputBackgroundColor();
+            var activeBorderColor = GetMiniCurrencyActiveInputBorderColor();
+            var inactiveBackgroundColor = GetMiniCurrencyInactiveCardBackgroundColor();
+            var inactiveBorderColor = Color.FromArgb(16, 255, 255, 255);
+            var effectiveInactiveBackgroundColor = GetMiniCurrencyEffectiveCardColor(inactiveBackgroundColor);
+            var effectiveActiveBackgroundColor = GetMiniCurrencyEffectiveCardColor(activeBackgroundColor);
+            var inactiveCardTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveInactiveBackgroundColor));
+            var inactiveValueTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveInactiveBackgroundColor));
+            var activeValueTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveActiveBackgroundColor));
+
+            foreach (var pair in _miniCurrencyInputs)
+            {
+                if (pair.Value == null)
+                {
+                    continue;
+                }
+
+                var isActive = pair.Key == activeCode;
+                if (_miniCurrencyRows.TryGetValue(pair.Key, out var rowElement) && rowElement is Grid row)
+                {
+                    var leftBorder = row.Children.OfType<Border>().FirstOrDefault(x => Grid.GetColumn(x) == 0);
+                    if (leftBorder != null)
+                    {
+                        leftBorder.Background = new SolidColorBrush(inactiveBackgroundColor);
+                        if (leftBorder.Child is StackPanel leftStack)
+                        {
+                            var codeText = leftStack.Children.OfType<TextBlock>().FirstOrDefault();
+                            if (codeText != null)
+                            {
+                                codeText.Foreground = inactiveCardTextBrush;
+                            }
+                        }
+                    }
+                }
+
+                pair.Value.Foreground = isActive ? activeValueTextBrush : inactiveValueTextBrush;
+                pair.Value.Background = new SolidColorBrush(isActive ? activeBackgroundColor : inactiveBackgroundColor);
+                pair.Value.BorderBrush = new SolidColorBrush(isActive ? activeBorderColor : inactiveBorderColor);
+            }
+        }
+
+        private async void MiniCurrencyThemeSettingsService_OnAccentColorChanged(object sender, Color color)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            {
+                HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+                RefreshMiniCurrencyCurrencyPickerRowVisualStates();
+            });
+        }
+
+        private void MiniCurrencyCardBackgroundOpacityPercentChanged(object sender, int percent)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+        }
+
+        private void MiniCurrencyActiveCardBackgroundOpacityPercentChanged(object sender, int percent)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+        }
+
+        private void MiniCurrencyValueFontWeightChanged(object sender, int fontWeight)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyValueFontWeight();
+        }
+
+        private void MiniCurrencyUseDefaultInactiveCardColorChanged(object sender, bool useDefault)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+        }
+
+        private void MiniCurrencyInactiveCardColorChanged(object sender, Color color)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            if (AppSettingsService.MiniCurrencyUseDefaultInactiveCardColor)
+            {
+                return;
+            }
+
+            HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+        }
+
+        private Color GetMiniCurrencyInactiveCardBackgroundColor()
+        {
+            var alpha = GetMiniCurrencyCardBackgroundAlpha();
+            var baseColor = GetMiniCurrencyInactiveCardBaseOpaqueColor();
+            return Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B);
+        }
+
+        private Color GetMiniCurrencyActiveInputBackgroundColor()
+        {
+            var accent = ThemeSettingsService.AppAccentColor;
+            return Color.FromArgb(GetMiniCurrencyActiveCardBackgroundAlpha(), accent.R, accent.G, accent.B);
+        }
+
+        private Color GetMiniCurrencyActiveInputBorderColor()
+        {
+            return ThemeSettingsService.AppAccentColor;
+        }
+
+        private byte GetMiniCurrencyCardBackgroundAlpha()
+        {
+            var percent = Math.Max(0, Math.Min(100, AppSettingsService.MiniCurrencyCardBackgroundOpacityPercent));
+            return (byte)Math.Round(255 * (percent / 100.0));
+        }
+
+        private byte GetMiniCurrencyActiveCardBackgroundAlpha()
+        {
+            var percent = Math.Max(0, Math.Min(100, AppSettingsService.MiniCurrencyActiveCardBackgroundOpacityPercent));
+            return (byte)Math.Round(255 * (percent / 100.0));
+        }
+
+        private void ApplyMiniCurrencyValueFontWeight()
+        {
+            var weight = GetMiniCurrencyValueFontWeight();
+            foreach (var input in _miniCurrencyInputs.Values)
+            {
+                ApplyMiniCurrencyValueFontWeightToInput(input, weight);
+            }
+        }
+
+        private static void ApplyMiniCurrencyValueFontWeightToInput(TextBox input, Windows.UI.Text.FontWeight? fontWeight = null)
+        {
+            if (input == null)
+            {
+                return;
+            }
+
+            input.FontWeight = fontWeight ?? GetMiniCurrencyValueFontWeight();
+        }
+
+        private static Windows.UI.Text.FontWeight GetMiniCurrencyValueFontWeight()
+        {
+            var normalized = Math.Max(100, Math.Min(900, AppSettingsService.MiniCurrencyValueFontWeight));
+            var rounded = (int)Math.Round(normalized / 100.0) * 100;
+            return new Windows.UI.Text.FontWeight { Weight = (ushort)rounded };
+        }
+
+        private Color GetMiniCurrencyInactiveCardBaseOpaqueColor()
+        {
+            if (AppSettingsService.MiniCurrencyUseDefaultInactiveCardColor)
+            {
+                return Color.FromArgb(255, 58, 58, 58);
+            }
+
+            var custom = AppSettingsService.MiniCurrencyInactiveCardColor;
+            return Color.FromArgb(255, custom.R, custom.G, custom.B);
+        }
+
+        private static Color GetMiniCurrencyAdaptiveTextColor(Color backgroundColor)
+        {
+            // WCAG relative luminance / contrast ratio for sRGB.
+            var darkContrast = GetMiniCurrencyContrastRatio(backgroundColor, MiniCurrencyAdaptiveTextDarkColor);
+            var lightContrast = GetMiniCurrencyContrastRatio(backgroundColor, MiniCurrencyAdaptiveTextLightColor);
+            return lightContrast >= darkContrast ? MiniCurrencyAdaptiveTextLightColor : MiniCurrencyAdaptiveTextDarkColor;
+        }
+
+        private Color GetMiniCurrencyEffectiveCardColor(Color cardColor)
+        {
+            if (cardColor.A >= 255)
+            {
+                return cardColor;
+            }
+
+            var sceneBackground = GetMiniCurrencyEstimatedSceneBackgroundColor();
+            return BlendMiniCurrencyColorOverBackground(cardColor, sceneBackground);
+        }
+
+        private Color GetMiniCurrencyEstimatedSceneBackgroundColor()
+        {
+            if (MiniCurrencyOverlay?.Background is SolidColorBrush overlayBrush && overlayBrush.Color.A > 0)
+            {
+                return overlayBrush.Color;
+            }
+
+            if (RootGrid?.Background is SolidColorBrush rootBrush && rootBrush.Color.A > 0)
+            {
+                return rootBrush.Color;
+            }
+
+            if (Background is SolidColorBrush pageBrush && pageBrush.Color.A > 0)
+            {
+                return pageBrush.Color;
+            }
+
+            return Color.FromArgb(255, 20, 20, 24);
+        }
+
+        private static double GetMiniCurrencyContrastRatio(Color backgroundColor, Color foregroundColor)
+        {
+            var bgLuminance = GetMiniCurrencyRelativeLuminance(backgroundColor);
+            var fgLuminance = GetMiniCurrencyRelativeLuminance(foregroundColor);
+            var lighter = Math.Max(bgLuminance, fgLuminance);
+            var darker = Math.Min(bgLuminance, fgLuminance);
+            return (lighter + 0.05) / (darker + 0.05);
+        }
+
+        private static double GetMiniCurrencyRelativeLuminance(Color color)
+        {
+            var r = GetMiniCurrencyLinearChannel(color.R / 255.0);
+            var g = GetMiniCurrencyLinearChannel(color.G / 255.0);
+            var b = GetMiniCurrencyLinearChannel(color.B / 255.0);
+            return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+        }
+
+        private static double GetMiniCurrencyLinearChannel(double srgb)
+        {
+            return srgb <= 0.04045
+                ? srgb / 12.92
+                : Math.Pow((srgb + 0.055) / 1.055, 2.4);
+        }
+
+        private void MiniCurrencyUiScalePercentChanged(object sender, int percent)
+        {
+            if (!IsMiniCurrencyMode)
+            {
+                return;
+            }
+
+            QueueMiniCurrencyUiScaleApply();
+        }
+
+        private void QueueMiniCurrencyUiScaleApply()
+        {
+            if (_miniCurrencyUiScaleApplyTimer == null)
+            {
+                _miniCurrencyUiScaleApplyTimer = new DispatcherTimer
+                {
+                    // Coalesce slider updates while dragging to reduce layout thrashing.
+                    Interval = TimeSpan.FromMilliseconds(33)
+                };
+                _miniCurrencyUiScaleApplyTimer.Tick += MiniCurrencyUiScaleApplyTimer_Tick;
+            }
+
+            _miniCurrencyUiScaleApplyTimer.Stop();
+            _miniCurrencyUiScaleApplyTimer.Start();
+        }
+
+        private void MiniCurrencyUiScaleApplyTimer_Tick(object sender, object e)
+        {
+            _miniCurrencyUiScaleApplyTimer?.Stop();
+
+            if (!IsMiniCurrencyMode)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyUiScale();
+        }
+
+        private void ApplyMiniCurrencyUiScale()
+        {
+            if (!IsMiniCurrencyMode)
+            {
+                return;
+            }
+
+            var factor = GetMiniCurrencyUiScaleFactor(AppSettingsService.MiniCurrencyUiScalePercent);
+
+            foreach (var row in _miniCurrencyRows.Values)
+            {
+                ApplyMiniCurrencyUiScaleToRow(row, factor);
+            }
+
+            ApplyMiniCurrencyUiScaleToExtraControls(factor);
+        }
+
+        private void ApplyMiniCurrencyUiScaleToRow(FrameworkElement rowElement)
+        {
+            var factor = GetMiniCurrencyUiScaleFactor(AppSettingsService.MiniCurrencyUiScalePercent);
+            ApplyMiniCurrencyUiScaleToRow(rowElement, factor);
+        }
+
+        private void ApplyMiniCurrencyUiScaleToRow(FrameworkElement rowElement, double factor)
+        {
+            if (!(rowElement is Grid row))
+            {
+                return;
+            }
+
+            row.Margin = ScaleThickness(0, 0, 0, MiniCurrencyBaseRowSpacing, factor);
+
+            if (row.ColumnDefinitions.Count >= 2)
+            {
+                row.ColumnDefinitions[0].Width = new GridLength(ScaleMetric(MiniCurrencyBaseLeftColumnWidth, factor));
+                row.ColumnDefinitions[1].Width = new GridLength(ScaleMetric(MiniCurrencyBaseMiddleGapWidth, factor));
+            }
+
+            var leftBorder = row.Children.Count > 0
+                ? row.Children[0] as Border
+                : null;
+
+            if (leftBorder == null)
+            {
+                leftBorder = row.Children
+                    .OfType<Border>()
+                    .FirstOrDefault(x => Grid.GetColumn(x) == 0);
+            }
+
+            if (leftBorder != null)
+            {
+                leftBorder.Height = ScaleMetric(MiniCurrencyBaseRowHeight, factor);
+                leftBorder.CornerRadius = new CornerRadius(ScaleMetric(MiniCurrencyBaseLeftCardCornerRadius, factor));
+                leftBorder.Padding = ScaleThickness(
+                    MiniCurrencyBaseFieldHorizontalPadding, 0,
+                    MiniCurrencyBaseFieldHorizontalPadding, 0, factor);
+
+                if (leftBorder.Child is StackPanel leftStack)
+                {
+                    leftStack.HorizontalAlignment = HorizontalAlignment.Left;
+
+                    if (leftStack.Children.Count > 0 && leftStack.Children[0] is Border flagCircle)
+                    {
+                        var flagSize = ScaleMetric(MiniCurrencyBaseFlagSize, factor);
+                        flagCircle.Width = flagSize;
+                        flagCircle.Height = flagSize;
+                        flagCircle.CornerRadius = new CornerRadius(ScaleMetric(MiniCurrencyBaseFlagCornerRadius, factor));
+                        flagCircle.Margin = new Thickness(0, 0, ScaleMetric(GetMiniCurrencyFlagCodeGapBase(), factor), 0);
+
+                        if (flagCircle.Child is Image flagImage)
+                        {
+                            flagImage.Width = flagSize;
+                            flagImage.Height = flagSize;
+                        }
+
+                    }
+
+                    var codeText = leftStack.Children.Count > 1
+                        ? leftStack.Children[1] as TextBlock
+                        : null;
+
+                    if (codeText == null)
+                    {
+                        codeText = leftStack.Children.OfType<TextBlock>().FirstOrDefault();
+                    }
+                    if (codeText != null)
+                    {
+                        codeText.FontSize = ScaleMetric(MiniCurrencyBaseCodeFontSize, factor);
+                    }
+                }
+            }
+
+            var input = row.Children.Count > 2
+                ? row.Children[2] as TextBox
+                : null;
+
+            if (input == null)
+            {
+                input = row.Children.OfType<TextBox>().FirstOrDefault();
+            }
+            if (input != null)
+            {
+                input.Height = ScaleMetric(MiniCurrencyBaseRowHeight, factor);
+                input.FontSize = ScaleMetric(MiniCurrencyBaseValueFontSize, factor);
+                input.Padding = ScaleThickness(
+                    MiniCurrencyBaseFieldHorizontalPadding, 0,
+                    MiniCurrencyBaseFieldHorizontalPadding, 0, factor);
+                input.CornerRadius = new CornerRadius(ScaleMetric(MiniCurrencyBaseValueCardCornerRadius, factor));
+            }
+
+            var removeButton = row.Children.Count > 3
+                ? row.Children[3] as Button
+                : null;
+
+            if (removeButton == null)
+            {
+                removeButton = row.Children
+                    .OfType<Button>()
+                    .FirstOrDefault(x => Grid.GetColumn(x) == 3);
+            }
+
+            if (removeButton != null)
+            {
+                var removeButtonSize = ScaleMetric(MiniCurrencyBaseRemoveButtonSize, factor);
+                removeButton.Height = removeButtonSize;
+                removeButton.Width = removeButtonSize;
+                removeButton.Margin = new Thickness(ScaleMetric(MiniCurrencyBaseRemoveButtonLeftMargin, factor), 0, 0, 0);
+            }
+        }
+
+        private void ApplyMiniCurrencyUiScaleToExtraControls(double factor)
+        {
+            if (CurrencySelectBox != null)
+            {
+                CurrencySelectBox.Width = ScaleMetric(MiniCurrencyBaseLeftColumnWidth, factor);
+                CurrencySelectBox.Height = ScaleMetric(MiniCurrencyBaseAddControlsHeight, factor);
+            }
+
+            if (AddCurrencyButton != null)
+            {
+                AddCurrencyButton.Height = ScaleMetric(MiniCurrencyBaseAddControlsHeight, factor);
+                AddCurrencyButton.Margin = new Thickness(ScaleMetric(MiniCurrencyBaseAddControlsGap, factor), 0, 0, 0);
+                AddCurrencyButton.Padding = ScaleThickness(16, 0, 16, 0, factor);
+            }
+
+            if (RefreshRatesButton != null)
+            {
+                RefreshRatesButton.Height = ScaleMetric(MiniCurrencyBaseAddControlsHeight, factor);
+                RefreshRatesButton.Margin = new Thickness(ScaleMetric(MiniCurrencyBaseAddControlsGap, factor), 0, 0, 0);
+                RefreshRatesButton.Padding = ScaleThickness(16, 0, 16, 0, factor);
+            }
+
+            if (CurrencyStatusText != null)
+            {
+                CurrencyStatusText.Margin = new Thickness(0, ScaleMetric(MiniCurrencyBaseStatusMarginTop, factor), 0, 0);
+                CurrencyStatusText.FontSize = ScaleMetric(MiniCurrencyBaseStatusFontSize, factor);
+            }
+        }
+
+        private static double GetMiniCurrencyUiScaleFactor(int percent)
+        {
+            var normalizedPercent = Math.Max(0, Math.Min(100, percent));
+            return MiniCurrencyUiScaleMinFactor +
+                (MiniCurrencyUiScaleMaxFactor - MiniCurrencyUiScaleMinFactor) * normalizedPercent / 100.0;
+        }
+
+        private double GetMiniCurrencyFlagCodeGapBase()
+        {
+            try
+            {
+                if (MiniCurrencyOverlay?.Resources != null &&
+                    MiniCurrencyOverlay.Resources.ContainsKey("MiniCurrencyFlagCodeGapMargin") &&
+                    MiniCurrencyOverlay.Resources["MiniCurrencyFlagCodeGapMargin"] is Thickness gap)
+                {
+                    return Math.Max(0, gap.Right);
+                }
+            }
+            catch
+            {
+                // Fallback to the default spacing if resource lookup fails.
+            }
+
+            return MiniCurrencyBaseFlagCodeGap;
+        }
+
+        private static double ScaleMetric(double baseValue, double factor)
+        {
+            return Math.Round(baseValue * factor, 2);
+        }
+
+        private static Thickness ScaleThickness(double left, double top, double right, double bottom, double factor)
+        {
+            return new Thickness(
+                ScaleMetric(left, factor),
+                ScaleMetric(top, factor),
+                ScaleMetric(right, factor),
+                ScaleMetric(bottom, factor));
+        }
+    }
+}
+
