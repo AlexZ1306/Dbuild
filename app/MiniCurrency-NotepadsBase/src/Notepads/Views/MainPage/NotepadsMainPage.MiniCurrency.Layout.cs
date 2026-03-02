@@ -12,9 +12,11 @@ namespace Notepads.Views.MainPage
     using Windows.Data.Json;
     using Windows.Storage;
     using Windows.UI;
+    using Windows.UI.ViewManagement;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Media;
+    using Windows.UI.Xaml.Media.Animation;
     using Windows.UI.Xaml.Media.Imaging;
 
     public sealed partial class NotepadsMainPage
@@ -64,6 +66,9 @@ namespace Notepads.Views.MainPage
         private const double MiniCurrencyBaseCalculatorPlusIconHeight = 17;
         private const double MiniCurrencyBaseCalculatorEqualsIconWidth = 17;
         private const double MiniCurrencyBaseCalculatorEqualsIconHeight = 14;
+        private const double MiniCurrencyMainContentAppearOffset = 250;
+        private const int MiniCurrencyMainContentAppearDurationMs = 250;
+        private const int MiniCurrencyMainContentAppearDelayMs = 300;
         private static readonly Color MiniCurrencyAdaptiveTextDarkColor = Color.FromArgb(255, 0x3E, 0x3E, 0x3E);
         private static readonly Color MiniCurrencyAdaptiveTextLightColor = Color.FromArgb(255, 0xF2, 0xF2, 0xF2);
 
@@ -1136,15 +1141,67 @@ namespace Notepads.Views.MainPage
         {
             var showCurrencies = AppSettingsService.MiniCurrencyShowCurrencies;
             var showCalculator = AppSettingsService.MiniCurrencyShowCalculator;
+            var isFirstApply = !_miniCurrencyMainContentVisibilityInitialized;
+            var animateCurrencies = showCurrencies && (isFirstApply || !_miniCurrencyMainContentShowCurrencies);
+            var animateCalculator = showCalculator && (isFirstApply || !_miniCurrencyMainContentShowCalculator);
+            var hideCurrencies = !showCurrencies && _miniCurrencyMainContentVisibilityInitialized && _miniCurrencyMainContentShowCurrencies;
+            var hideCalculator = !showCalculator && _miniCurrencyMainContentVisibilityInitialized && _miniCurrencyMainContentShowCalculator;
 
             if (CurrencyRowsScrollViewer != null)
             {
-                CurrencyRowsScrollViewer.Visibility = showCurrencies ? Visibility.Visible : Visibility.Collapsed;
+                if (showCurrencies)
+                {
+                    CurrencyRowsScrollViewer.Visibility = Visibility.Visible;
+                    if (animateCurrencies)
+                    {
+                        AnimateMiniCurrencyMainContentAppearance(CurrencyRowsScrollViewer, -MiniCurrencyMainContentAppearOffset);
+                    }
+                    else
+                    {
+                        ResetMiniCurrencyMainContentVisualState(CurrencyRowsScrollViewer);
+                    }
+                }
+                else if (hideCurrencies)
+                {
+                    AnimateMiniCurrencyMainContentDisappearance(
+                        CurrencyRowsScrollViewer,
+                        -MiniCurrencyMainContentAppearOffset,
+                        () => !AppSettingsService.MiniCurrencyShowCurrencies);
+                }
+                else
+                {
+                    CurrencyRowsScrollViewer.Visibility = Visibility.Collapsed;
+                    ResetMiniCurrencyMainContentVisualState(CurrencyRowsScrollViewer);
+                }
             }
 
             if (MiniCurrencyCalculatorHost != null)
             {
-                MiniCurrencyCalculatorHost.Visibility = showCalculator ? Visibility.Visible : Visibility.Collapsed;
+                if (showCalculator)
+                {
+                    MiniCurrencyCalculatorHost.Visibility = Visibility.Visible;
+                    if (animateCalculator)
+                    {
+                        var delay = animateCurrencies ? MiniCurrencyMainContentAppearDelayMs : 0;
+                        AnimateMiniCurrencyMainContentAppearance(MiniCurrencyCalculatorHost, MiniCurrencyMainContentAppearOffset, delay);
+                    }
+                    else
+                    {
+                        ResetMiniCurrencyMainContentVisualState(MiniCurrencyCalculatorHost);
+                    }
+                }
+                else if (hideCalculator)
+                {
+                    AnimateMiniCurrencyMainContentDisappearance(
+                        MiniCurrencyCalculatorHost,
+                        MiniCurrencyMainContentAppearOffset,
+                        () => !AppSettingsService.MiniCurrencyShowCalculator);
+                }
+                else
+                {
+                    MiniCurrencyCalculatorHost.Visibility = Visibility.Collapsed;
+                    ResetMiniCurrencyMainContentVisualState(MiniCurrencyCalculatorHost);
+                }
             }
 
             if (MiniCurrencyEmptyStateText != null)
@@ -1159,9 +1216,164 @@ namespace Notepads.Views.MainPage
                 RestoreMiniCurrencyRatesStatus();
             }
 
+            _miniCurrencyMainContentVisibilityInitialized = true;
+            _miniCurrencyMainContentShowCurrencies = showCurrencies;
+            _miniCurrencyMainContentShowCalculator = showCalculator;
+
             UpdateMiniCurrencyCurrencyRowsBottomPadding();
             UpdateMiniCurrencyRowWidths();
             UpdateMiniCurrencyCalculatorRowWidths();
+        }
+
+        private static void ResetMiniCurrencyMainContentVisualState(FrameworkElement element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            element.Opacity = 1;
+            if (element.RenderTransform is TranslateTransform translateTransform)
+            {
+                translateTransform.Y = 0;
+            }
+        }
+
+        private bool IsMiniCurrencyAnimationEnabled()
+        {
+            try
+            {
+                return new UISettings().AnimationsEnabled;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private void AnimateMiniCurrencyMainContentAppearance(FrameworkElement element, double fromOffsetY, double beginDelayMs = 0)
+        {
+            if (element == null || element.Visibility != Visibility.Visible)
+            {
+                return;
+            }
+
+            if (!(element.RenderTransform is TranslateTransform translateTransform))
+            {
+                translateTransform = new TranslateTransform();
+                element.RenderTransform = translateTransform;
+            }
+
+            if (!IsMiniCurrencyAnimationEnabled())
+            {
+                element.Opacity = 1;
+                translateTransform.Y = 0;
+                return;
+            }
+
+            element.Opacity = 0;
+            translateTransform.Y = fromOffsetY;
+
+            var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+            var delay = TimeSpan.FromMilliseconds(Math.Max(0, beginDelayMs));
+            var duration = new Duration(TimeSpan.FromMilliseconds(MiniCurrencyMainContentAppearDurationMs));
+
+            var fade = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                BeginTime = delay,
+                Duration = duration,
+                EasingFunction = easing,
+                EnableDependentAnimation = true
+            };
+
+            var slide = new DoubleAnimation
+            {
+                From = fromOffsetY,
+                To = 0,
+                BeginTime = delay,
+                Duration = duration,
+                EasingFunction = easing,
+                EnableDependentAnimation = true
+            };
+
+            Storyboard.SetTarget(fade, element);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+
+            Storyboard.SetTarget(slide, element);
+            Storyboard.SetTargetProperty(slide, "(UIElement.RenderTransform).(TranslateTransform.Y)");
+
+            var storyboard = new Storyboard();
+            storyboard.Children.Add(fade);
+            storyboard.Children.Add(slide);
+            storyboard.Begin();
+        }
+
+        private void AnimateMiniCurrencyMainContentDisappearance(FrameworkElement element, double toOffsetY, Func<bool> shouldCollapse)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            if (!(element.RenderTransform is TranslateTransform translateTransform))
+            {
+                translateTransform = new TranslateTransform();
+                element.RenderTransform = translateTransform;
+            }
+
+            if (!IsMiniCurrencyAnimationEnabled())
+            {
+                element.Visibility = Visibility.Collapsed;
+                ResetMiniCurrencyMainContentVisualState(element);
+                return;
+            }
+
+            element.Visibility = Visibility.Visible;
+            element.Opacity = 1;
+            translateTransform.Y = 0;
+
+            var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+            var duration = new Duration(TimeSpan.FromMilliseconds(MiniCurrencyMainContentAppearDurationMs));
+
+            var fade = new DoubleAnimation
+            {
+                From = 1,
+                To = 0,
+                Duration = duration,
+                EasingFunction = easing,
+                EnableDependentAnimation = true
+            };
+
+            var slide = new DoubleAnimation
+            {
+                From = 0,
+                To = toOffsetY,
+                Duration = duration,
+                EasingFunction = easing,
+                EnableDependentAnimation = true
+            };
+
+            Storyboard.SetTarget(fade, element);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+
+            Storyboard.SetTarget(slide, element);
+            Storyboard.SetTargetProperty(slide, "(UIElement.RenderTransform).(TranslateTransform.Y)");
+
+            var storyboard = new Storyboard();
+            storyboard.Children.Add(fade);
+            storyboard.Children.Add(slide);
+            storyboard.Completed += (s, e) =>
+            {
+                if (shouldCollapse == null || shouldCollapse())
+                {
+                    element.Visibility = Visibility.Collapsed;
+                }
+
+                ResetMiniCurrencyMainContentVisualState(element);
+            };
+            storyboard.Begin();
         }
 
         private void ApplyMiniCurrencyUiScaleToCalculator(double factor)
@@ -1435,4 +1647,3 @@ namespace Notepads.Views.MainPage
         }
     }
 }
-

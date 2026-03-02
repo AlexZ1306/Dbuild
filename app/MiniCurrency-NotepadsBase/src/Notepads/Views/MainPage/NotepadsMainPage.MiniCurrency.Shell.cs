@@ -1098,11 +1098,13 @@ namespace Notepads.Views.MainPage
 
         private void MenuShowCurrenciesButton_Click(object sender, RoutedEventArgs e)
         {
+            _miniCurrencyKeepMainMenuFlyoutOpenOnce = true;
             AppSettingsService.MiniCurrencyShowCurrencies = !AppSettingsService.MiniCurrencyShowCurrencies;
         }
 
         private void MenuShowCalculatorButton_Click(object sender, RoutedEventArgs e)
         {
+            _miniCurrencyKeepMainMenuFlyoutOpenOnce = true;
             AppSettingsService.MiniCurrencyShowCalculator = !AppSettingsService.MiniCurrencyShowCalculator;
         }
 

@@ -71,6 +71,7 @@ namespace Notepads.Views.MainPage
 
             ApplyMiniCurrencyMainMenuMode();
             MainMenuButtonFlyout.Opening += MainMenuButtonFlyout_Opening;
+            MainMenuButtonFlyout.Closing += MainMenuButtonFlyout_Closing;
         }
 
         private void MainMenuButtonFlyout_Opening(object sender, object e)
@@ -118,6 +119,15 @@ namespace Notepads.Views.MainPage
                     ? "App_ExitCompactOverlayMode_Text"
                     : "App_EnterCompactOverlayMode_Text");
             MenuSaveAllButton.IsEnabled = NotepadsCore.HaveUnsavedTextEditor();
+        }
+
+        private void MainMenuButtonFlyout_Closing(FlyoutBase sender, FlyoutBaseClosingEventArgs args)
+        {
+            if (_miniCurrencyKeepMainMenuFlyoutOpenOnce)
+            {
+                args.Cancel = true;
+                _miniCurrencyKeepMainMenuFlyoutOpenOnce = false;
+            }
         }
 
         private async Task BuildOpenRecentButtonSubItemsAsync()
