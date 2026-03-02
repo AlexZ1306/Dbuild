@@ -30,6 +30,7 @@ namespace Notepads.Views.Settings
         private bool _savedNavigationPaneToggleIsHitTestVisible = true;
         private SplitView _cachedNavigationSplitView;
         private Brush _savedNavigationSplitPaneBackground;
+        private bool _savedIsPaneToggleButtonVisible = true;
         private readonly Dictionary<NavigationViewItem, (double Opacity, bool IsHitTestVisible)> _savedNavigationMenuItemsState
             = new Dictionary<NavigationViewItem, (double Opacity, bool IsHitTestVisible)>();
 
@@ -116,8 +117,10 @@ namespace Notepads.Views.Settings
             _isPreviewHoldModeActive = true;
             _savedPageBackground = Background;
             _savedNavigationBackground = SettingsNavigationView.Background;
+            _savedIsPaneToggleButtonVisible = SettingsNavigationView.IsPaneToggleButtonVisible;
             Background = new SolidColorBrush(Colors.Transparent);
             SettingsNavigationView.Background = new SolidColorBrush(Colors.Transparent);
+            SettingsNavigationView.IsPaneToggleButtonVisible = false;
             SetNavigationMenuItemsPreviewVisibility(visible: false);
             HideNavigationPaneToggleButton();
             MakeNavigationPaneBackgroundTransparent();
@@ -151,6 +154,7 @@ namespace Notepads.Views.Settings
             _isPreviewHoldModeActive = false;
             Background = _savedPageBackground;
             SettingsNavigationView.Background = _savedNavigationBackground;
+            SettingsNavigationView.IsPaneToggleButtonVisible = _savedIsPaneToggleButtonVisible;
             SetNavigationMenuItemsPreviewVisibility(visible: true);
             RestoreNavigationPaneToggleButton();
             RestoreNavigationPaneBackground();
