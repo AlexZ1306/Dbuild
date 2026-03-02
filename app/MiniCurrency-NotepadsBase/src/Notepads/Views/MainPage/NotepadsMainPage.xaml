@@ -223,10 +223,22 @@
                                             </MenuFlyoutItem>
                                             <MenuFlyoutItem x:Name="MenuShowCurrenciesButton"
                                                             Text="Валюты"
-                                                            Visibility="Collapsed"/>
+                                                            Visibility="Collapsed">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                                                              Glyph="&#xE825;"
+                                                              FontSize="15"/>
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem x:Name="MenuShowCalculatorButton"
                                                             Text="Калькулятор"
-                                                            Visibility="Collapsed"/>
+                                                            Visibility="Collapsed">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                                                              Glyph="&#xE8EF;"
+                                                              FontSize="15"/>
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem x:Uid="MainMenu_Button_Settings" x:Name="MenuSettingsButton" Icon="Setting">
                                                 <MenuFlyoutItem.KeyboardAccelerators>
                                                     <KeyboardAccelerator Key="F1" IsEnabled="False"/>
