@@ -79,6 +79,7 @@ namespace Notepads.Views.MainPage
             }
 
             _miniCurrencyPressedRow = row;
+            _miniCurrencyPressedRowHitPart = GetMiniCurrencyRowHitPartAtPoint(row, e.GetCurrentPoint(row).Position);
             _miniCurrencyDragPointerId = e.Pointer.PointerId;
             _miniCurrencyRowDragStarted = false;
             _miniCurrencyDragPointerOffsetY = e.GetCurrentPoint(row).Position.Y;
@@ -86,10 +87,17 @@ namespace Notepads.Views.MainPage
             row.CapturePointer(e.Pointer);
             CurrencyRowsViewport.CapturePointer(e.Pointer);
             MiniCurrencyOverlay?.CapturePointer(e.Pointer);
+            HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
         }
 
         private void CurrencyRow_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
+            if (e.Pointer.PointerDeviceType == Windows.Devices.Input.PointerDeviceType.Mouse &&
+                sender is FrameworkElement rowElement)
+            {
+                UpdateMiniCurrencyHoveredRowState(rowElement, e);
+            }
+
             if (_miniCurrencyRowDragStarted)
             {
                 // While dragging, handle movement only at viewport level to avoid duplicate move processing.
@@ -493,6 +501,8 @@ namespace Notepads.Views.MainPage
             _miniCurrencySuppressNextRowTap = false;
             _miniCurrencyDragLastPointerYInViewport = 0;
             _miniCurrencyDragHasLastPointerYInViewport = false;
+            _miniCurrencyPressedRowHitPart = MiniCurrencyRowHitPart.None;
+            HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
         }
 
         private void ResetMiniCurrencyRowDragState(bool restoreRow, bool saveOrder)
@@ -544,8 +554,10 @@ namespace Notepads.Views.MainPage
             _miniCurrencySuppressNextRowTap = false;
             _miniCurrencyDragLastPointerYInViewport = 0;
             _miniCurrencyDragHasLastPointerYInViewport = false;
+            _miniCurrencyPressedRowHitPart = MiniCurrencyRowHitPart.None;
             CurrencyRowsViewport?.ReleasePointerCaptures();
             MiniCurrencyOverlay?.ReleasePointerCaptures();
+            HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
         }
 
         private FrameworkElement GetMiniCurrencyDragRoot()
@@ -570,18 +582,93 @@ namespace Notepads.Views.MainPage
 
         private void CurrencyRow_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
+            if (e.Pointer.PointerDeviceType != Windows.Devices.Input.PointerDeviceType.Mouse)
+            {
+                return;
+            }
+
             if (Window.Current?.CoreWindow != null)
             {
                 Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Hand, 0);
+            }
+
+            if (sender is FrameworkElement row)
+            {
+                UpdateMiniCurrencyHoveredRowState(row, e);
             }
         }
 
         private void CurrencyRow_PointerExited(object sender, PointerRoutedEventArgs e)
         {
+            if (e.Pointer.PointerDeviceType != Windows.Devices.Input.PointerDeviceType.Mouse)
+            {
+                return;
+            }
+
             if (Window.Current?.CoreWindow != null)
             {
                 Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
             }
+
+            if (sender is FrameworkElement row && row.Tag is string code)
+            {
+                var normalizedCode = code.Trim().ToUpperInvariant();
+                if (string.Equals(_miniCurrencyHoveredRowCode, normalizedCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    _miniCurrencyHoveredRowCode = null;
+                    _miniCurrencyHoveredRowHitPart = MiniCurrencyRowHitPart.None;
+                    HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+                }
+            }
+        }
+
+        private void UpdateMiniCurrencyHoveredRowState(FrameworkElement row, PointerRoutedEventArgs e)
+        {
+            if (row == null || !(row.Tag is string code))
+            {
+                return;
+            }
+
+            var normalizedCode = code.Trim().ToUpperInvariant();
+            var hitPart = GetMiniCurrencyRowHitPartAtPoint(row, e.GetCurrentPoint(row).Position);
+            if (string.Equals(_miniCurrencyHoveredRowCode, normalizedCode, StringComparison.OrdinalIgnoreCase) &&
+                _miniCurrencyHoveredRowHitPart == hitPart)
+            {
+                return;
+            }
+
+            _miniCurrencyHoveredRowCode = normalizedCode;
+            _miniCurrencyHoveredRowHitPart = hitPart;
+            HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+        }
+
+        private MiniCurrencyRowHitPart GetMiniCurrencyRowHitPartAtPoint(FrameworkElement rowElement, Windows.Foundation.Point pointInRow)
+        {
+            if (!(rowElement is Grid row))
+            {
+                return MiniCurrencyRowHitPart.None;
+            }
+
+            var x = pointInRow.X;
+            if (x < 0 || x > row.ActualWidth)
+            {
+                return MiniCurrencyRowHitPart.None;
+            }
+
+            var leftWidth = row.ColumnDefinitions.Count > 0 ? row.ColumnDefinitions[0].ActualWidth : 0;
+            var middleGapWidth = row.ColumnDefinitions.Count > 1 ? row.ColumnDefinitions[1].ActualWidth : 0;
+
+            if (x <= leftWidth)
+            {
+                return MiniCurrencyRowHitPart.LeftCard;
+            }
+
+            if (x >= leftWidth + middleGapWidth)
+            {
+                return MiniCurrencyRowHitPart.ValueCard;
+            }
+
+            return MiniCurrencyRowHitPart.None;
         }
 
         private void CurrencyInput_PointerPressed(object sender, PointerRoutedEventArgs e)

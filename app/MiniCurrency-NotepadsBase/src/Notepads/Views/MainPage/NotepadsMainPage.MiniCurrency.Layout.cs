@@ -699,11 +699,8 @@ namespace Notepads.Views.MainPage
             var activeBorderColor = GetMiniCurrencyActiveInputBorderColor();
             var inactiveBackgroundColor = GetMiniCurrencyInactiveCardBackgroundColor();
             var inactiveBorderColor = Color.FromArgb(16, 255, 255, 255);
-            var effectiveInactiveBackgroundColor = GetMiniCurrencyEffectiveCardColor(inactiveBackgroundColor);
-            var effectiveActiveBackgroundColor = GetMiniCurrencyEffectiveCardColor(activeBackgroundColor);
-            var inactiveCardTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveInactiveBackgroundColor));
-            var inactiveValueTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveInactiveBackgroundColor));
-            var activeValueTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveActiveBackgroundColor));
+            var hoveredCode = (_miniCurrencyHoveredRowCode ?? string.Empty).Trim().ToUpperInvariant();
+            var pressedCode = (_miniCurrencyPressedRow?.Tag as string ?? string.Empty).Trim().ToUpperInvariant();
 
             foreach (var pair in _miniCurrencyInputs)
             {
@@ -713,25 +710,57 @@ namespace Notepads.Views.MainPage
                 }
 
                 var isActive = pair.Key == activeCode;
+                var isLeftHovered = pair.Key == hoveredCode && _miniCurrencyHoveredRowHitPart == MiniCurrencyRowHitPart.LeftCard;
+                var isRightHovered = pair.Key == hoveredCode && _miniCurrencyHoveredRowHitPart == MiniCurrencyRowHitPart.ValueCard;
+                var isLeftPressed = pair.Key == pressedCode && _miniCurrencyPressedRowHitPart == MiniCurrencyRowHitPart.LeftCard;
+                var isRightPressed = pair.Key == pressedCode && _miniCurrencyPressedRowHitPart == MiniCurrencyRowHitPart.ValueCard;
+
+                // Left card never uses active accent color.
+                var leftDisplayedBackgroundColor = inactiveBackgroundColor;
+                if (isLeftPressed)
+                {
+                    leftDisplayedBackgroundColor = DarkenMiniCurrencyColor(leftDisplayedBackgroundColor, MiniCurrencyCalculatorPressedDarkenFactor);
+                }
+                else if (isLeftHovered)
+                {
+                    leftDisplayedBackgroundColor = DarkenMiniCurrencyColor(leftDisplayedBackgroundColor, MiniCurrencyCalculatorHoverDarkenFactor);
+                }
+
+                // Right value card keeps active/inactive base, then applies local hover/press shading.
+                var rightBaseBackgroundColor = isActive ? activeBackgroundColor : inactiveBackgroundColor;
+                var rightDisplayedBackgroundColor = rightBaseBackgroundColor;
+                if (isRightPressed)
+                {
+                    rightDisplayedBackgroundColor = DarkenMiniCurrencyColor(rightDisplayedBackgroundColor, MiniCurrencyCalculatorPressedDarkenFactor);
+                }
+                else if (isRightHovered)
+                {
+                    rightDisplayedBackgroundColor = DarkenMiniCurrencyColor(rightDisplayedBackgroundColor, MiniCurrencyCalculatorHoverDarkenFactor);
+                }
+
+                var leftEffectiveColor = GetMiniCurrencyEffectiveCardColor(leftDisplayedBackgroundColor);
+                var rightEffectiveColor = GetMiniCurrencyEffectiveCardColor(rightDisplayedBackgroundColor);
+                var leftTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(leftEffectiveColor));
+                var rightTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(rightEffectiveColor));
                 if (_miniCurrencyRows.TryGetValue(pair.Key, out var rowElement) && rowElement is Grid row)
                 {
                     var leftBorder = row.Children.OfType<Border>().FirstOrDefault(x => Grid.GetColumn(x) == 0);
                     if (leftBorder != null)
                     {
-                        leftBorder.Background = new SolidColorBrush(inactiveBackgroundColor);
+                        leftBorder.Background = new SolidColorBrush(leftDisplayedBackgroundColor);
                         if (leftBorder.Child is StackPanel leftStack)
                         {
                             var codeText = leftStack.Children.OfType<TextBlock>().FirstOrDefault();
                             if (codeText != null)
                             {
-                                codeText.Foreground = inactiveCardTextBrush;
+                                codeText.Foreground = leftTextBrush;
                             }
                         }
                     }
                 }
 
-                pair.Value.Foreground = isActive ? activeValueTextBrush : inactiveValueTextBrush;
-                pair.Value.Background = new SolidColorBrush(isActive ? activeBackgroundColor : inactiveBackgroundColor);
+                pair.Value.Foreground = rightTextBrush;
+                pair.Value.Background = new SolidColorBrush(rightDisplayedBackgroundColor);
                 pair.Value.BorderBrush = new SolidColorBrush(isActive ? activeBorderColor : inactiveBorderColor);
             }
         }

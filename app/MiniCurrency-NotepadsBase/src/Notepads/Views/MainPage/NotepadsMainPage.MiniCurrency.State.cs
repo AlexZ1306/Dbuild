@@ -25,6 +25,13 @@ namespace Notepads.Views.MainPage
             ToggleMainVisibility = 1
         }
 
+        private enum MiniCurrencyRowHitPart
+        {
+            None = 0,
+            LeftCard = 1,
+            ValueCard = 2
+        }
+
         private readonly CultureInfo _miniCurrencyCulture = CultureInfo.GetCultureInfo("ru-RU");
         private const string MiniCurrencyRatesApiUrl = "https://open.er-api.com/v6/latest/USD";
         private const string MiniCurrencyVisibleCurrenciesKey = "MiniCurrency.VisibleCurrencies";
@@ -65,7 +72,10 @@ namespace Notepads.Views.MainPage
         private bool _miniCurrencyRatesStatusSupportsHoverRefreshPrefix;
         private DateTimeOffset? _miniCurrencyLastSuccessfulRatesUpdateLocal;
         private bool _miniCurrencyStatusIndicatorHovered;
+        private string _miniCurrencyHoveredRowCode;
+        private MiniCurrencyRowHitPart _miniCurrencyHoveredRowHitPart;
         private FrameworkElement _miniCurrencyPressedRow;
+        private MiniCurrencyRowHitPart _miniCurrencyPressedRowHitPart;
         private FrameworkElement _miniCurrencyDraggingRow;
         private Border _miniCurrencyDragPlaceholder;
         private DispatcherTimer _miniCurrencyUiScaleApplyTimer;
