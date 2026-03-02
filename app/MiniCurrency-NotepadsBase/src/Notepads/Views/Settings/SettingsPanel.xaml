@@ -26,13 +26,14 @@
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid Background="{ThemeResource SettingsPanelBackgroundBrush}">
+    <Grid x:Name="SettingsPanelRootGrid" Background="{ThemeResource SettingsPanelBackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="60"/>
+            <RowDefinition x:Name="SettingsPanelHeaderRow" Height="60"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Row="0" 
+        <Grid x:Name="SettingsPanelHeaderGrid"
+              Row="0" 
               Margin="18,0,18,0"
               BorderThickness="0,0,0,1"
               BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}">

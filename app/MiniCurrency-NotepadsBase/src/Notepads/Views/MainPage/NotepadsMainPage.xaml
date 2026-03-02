@@ -820,7 +820,8 @@
             <SplitView.Pane>
                 <Border x:Name="RootBorder" Padding="12,0,0,0">
                     <Grid>
-                        <controls:DropShadowPanel BlurRadius="12"
+                        <controls:DropShadowPanel x:Name="SettingsPaneShadowPanel"
+                                                  BlurRadius="12"
                                                   Color="Black"
                                                   Opacity="0.3"
                                                   HorizontalContentAlignment="Stretch"

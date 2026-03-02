@@ -5,6 +5,7 @@
 
 namespace Notepads.Views.Settings
 {
+    using System.Collections.Generic;
     using Notepads.Extensions;
     using Notepads.Services;
     using Windows.System.Power;
@@ -13,11 +14,21 @@ namespace Notepads.Views.Settings
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Controls.Primitives;
+    using Windows.UI.Xaml.Input;
     using Windows.UI.Xaml.Media;
 
     public sealed partial class PersonalizationSettingsPage : Page
     {
         private readonly UISettings UISettings = new UISettings();
+        private const double PersonalizationPreviewSliderOpacity = 0.0;
+        private const double PersonalizationPreviewColorSpectrumOpacity = 0.05;
+        private bool _isPersonalizationPreviewActive;
+        private double _activePreviewHostOpacity = PersonalizationPreviewSliderOpacity;
+        private FrameworkElement _personalizationPreviewHostElement;
+        private SettingsPage _cachedParentSettingsPage;
+        private Brush _savedPageBackground;
+        private readonly Dictionary<FrameworkElement, (double Opacity, bool IsHitTestVisible)> _personalizationPreviewState
+            = new Dictionary<FrameworkElement, (double Opacity, bool IsHitTestVisible)>();
 
         public PersonalizationSettingsPage()
         {
@@ -116,6 +127,7 @@ namespace Notepads.Views.Settings
             AccentColorToggle.Toggled += WindowsAccentColorToggle_OnToggled;
             AccentColorPicker.ColorChanged += AccentColorPicker_OnColorChanged;
             ThemeSettingsService.OnAccentColorChanged += ThemeSettingsService_OnAccentColorChanged;
+            RegisterPersonalizationPreviewHoldGestureHandlers();
             if (!App.IsGameBarWidget)
             {
                 UISettings.AdvancedEffectsEnabledChanged += UISettings_AdvancedEffectsEnabledChanged;
@@ -144,6 +156,8 @@ namespace Notepads.Views.Settings
             AccentColorToggle.Toggled -= WindowsAccentColorToggle_OnToggled;
             AccentColorPicker.ColorChanged -= AccentColorPicker_OnColorChanged;
             ThemeSettingsService.OnAccentColorChanged -= ThemeSettingsService_OnAccentColorChanged;
+            UnregisterPersonalizationPreviewHoldGestureHandlers();
+            ExitPersonalizationPreviewHoldMode();
             if (!App.IsGameBarWidget)
             {
                 UISettings.AdvancedEffectsEnabledChanged -= UISettings_AdvancedEffectsEnabledChanged;
@@ -289,6 +303,463 @@ namespace Notepads.Views.Settings
             AccentColorPicker.IsEnabled = !AccentColorToggle.IsOn;
             ThemeSettingsService.UseWindowsAccentColor = AccentColorToggle.IsOn;
             AccentColorPicker.Color = AccentColorToggle.IsOn ? ThemeSettingsService.AppAccentColor : ThemeSettingsService.CustomAccentColor;
+        }
+
+        private void RegisterPersonalizationPreviewHoldGestureHandlers()
+        {
+            RegisterPreviewPointerHandlers(BackgroundTintOpacitySlider);
+            RegisterPreviewPointerHandlers(MiniCurrencyUiScaleSlider);
+            RegisterPreviewPointerHandlers(MiniCurrencyActiveCardOpacitySlider);
+            RegisterPreviewPointerHandlers(MiniCurrencyCardOpacitySlider);
+            RegisterPreviewPointerHandlers(MiniCurrencyValueFontWeightSlider);
+            RegisterPreviewPointerHandlers(MiniCurrencyCalculatorEqualsButtonOpacitySlider);
+            RegisterPreviewPointerHandlers(MiniCurrencyCalculatorButtonsOpacitySlider);
+
+            RegisterPreviewPointerHandlers(AccentColorPicker);
+            RegisterPreviewPointerHandlers(MiniCurrencyInactiveCardColorPicker);
+            RegisterPreviewPointerHandlers(MiniCurrencyCalculatorEqualsButtonColorPicker);
+            RegisterPreviewPointerHandlers(MiniCurrencyCalculatorDigitTextColorPicker);
+            RegisterPreviewPointerHandlers(MiniCurrencyCalculatorOperatorTextColorPicker);
+        }
+
+        private void UnregisterPersonalizationPreviewHoldGestureHandlers()
+        {
+            UnregisterPreviewPointerHandlers(BackgroundTintOpacitySlider);
+            UnregisterPreviewPointerHandlers(MiniCurrencyUiScaleSlider);
+            UnregisterPreviewPointerHandlers(MiniCurrencyActiveCardOpacitySlider);
+            UnregisterPreviewPointerHandlers(MiniCurrencyCardOpacitySlider);
+            UnregisterPreviewPointerHandlers(MiniCurrencyValueFontWeightSlider);
+            UnregisterPreviewPointerHandlers(MiniCurrencyCalculatorEqualsButtonOpacitySlider);
+            UnregisterPreviewPointerHandlers(MiniCurrencyCalculatorButtonsOpacitySlider);
+
+            UnregisterPreviewPointerHandlers(AccentColorPicker);
+            UnregisterPreviewPointerHandlers(MiniCurrencyInactiveCardColorPicker);
+            UnregisterPreviewPointerHandlers(MiniCurrencyCalculatorEqualsButtonColorPicker);
+            UnregisterPreviewPointerHandlers(MiniCurrencyCalculatorDigitTextColorPicker);
+            UnregisterPreviewPointerHandlers(MiniCurrencyCalculatorOperatorTextColorPicker);
+        }
+
+        private void RegisterPreviewPointerHandlers(FrameworkElement element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            element.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(PersonalizationPreview_PointerPressed), true);
+            element.AddHandler(UIElement.PointerReleasedEvent, new PointerEventHandler(PersonalizationPreview_PointerReleased), true);
+            element.AddHandler(UIElement.PointerCanceledEvent, new PointerEventHandler(PersonalizationPreview_PointerCanceled), true);
+            element.AddHandler(UIElement.PointerCaptureLostEvent, new PointerEventHandler(PersonalizationPreview_PointerCaptureLost), true);
+            element.Unloaded += PersonalizationPreview_TrackedElement_Unloaded;
+        }
+
+        private void UnregisterPreviewPointerHandlers(FrameworkElement element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            element.RemoveHandler(UIElement.PointerPressedEvent, new PointerEventHandler(PersonalizationPreview_PointerPressed));
+            element.RemoveHandler(UIElement.PointerReleasedEvent, new PointerEventHandler(PersonalizationPreview_PointerReleased));
+            element.RemoveHandler(UIElement.PointerCanceledEvent, new PointerEventHandler(PersonalizationPreview_PointerCanceled));
+            element.RemoveHandler(UIElement.PointerCaptureLostEvent, new PointerEventHandler(PersonalizationPreview_PointerCaptureLost));
+            element.Unloaded -= PersonalizationPreview_TrackedElement_Unloaded;
+        }
+
+        private void PersonalizationPreview_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            var sourceControl = sender as Control;
+            if (sourceControl == null || !sourceControl.IsEnabled)
+            {
+                return;
+            }
+
+            if (!e.GetCurrentPoint(sourceControl).Properties.IsLeftButtonPressed)
+            {
+                return;
+            }
+
+            if (!TryResolvePreviewHostAndOpacity(sourceControl, e.OriginalSource as DependencyObject, out var previewHost, out var previewOpacity))
+            {
+                return;
+            }
+
+            EnterPersonalizationPreviewHoldMode(previewHost, previewOpacity);
+        }
+
+        private void PersonalizationPreview_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            ExitPersonalizationPreviewHoldMode();
+        }
+
+        private void PersonalizationPreview_PointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            ExitPersonalizationPreviewHoldMode();
+        }
+
+        private void PersonalizationPreview_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+        {
+            ExitPersonalizationPreviewHoldMode();
+        }
+
+        private void PersonalizationPreview_TrackedElement_Unloaded(object sender, RoutedEventArgs e)
+        {
+            ExitPersonalizationPreviewHoldMode();
+        }
+
+        private void EnterPersonalizationPreviewHoldMode(FrameworkElement previewHost, double previewHostOpacity)
+        {
+            if (PersonalizationSettingsRootStack == null)
+            {
+                return;
+            }
+
+            if (previewHost == null)
+            {
+                return;
+            }
+
+            if (_isPersonalizationPreviewActive && ReferenceEquals(_personalizationPreviewHostElement, previewHost))
+            {
+                return;
+            }
+
+            ExitPersonalizationPreviewHoldMode();
+
+            _isPersonalizationPreviewActive = true;
+            _personalizationPreviewHostElement = previewHost;
+            _activePreviewHostOpacity = previewHostOpacity;
+            _savedPageBackground = Background;
+            Background = new SolidColorBrush(Colors.Transparent);
+            GetParentSettingsPage()?.EnterPreviewHoldMode();
+
+            var topLevelContainer = FindPersonalizationTopLevelContainer(previewHost);
+            if (topLevelContainer == null)
+            {
+                return;
+            }
+
+            foreach (var child in PersonalizationSettingsRootStack.Children)
+            {
+                if (!(child is FrameworkElement topLevelElement))
+                {
+                    continue;
+                }
+
+                if (ReferenceEquals(topLevelElement, topLevelContainer))
+                {
+                    ApplyPersonalizationPreviewInsideTopLevel(topLevelElement, previewHost);
+                    continue;
+                }
+
+                SaveAndApplyPersonalizationPreviewState(topLevelElement, opacity: 0.0, isHitTestVisible: false);
+            }
+        }
+
+        private void ExitPersonalizationPreviewHoldMode()
+        {
+            if (!_isPersonalizationPreviewActive && _personalizationPreviewState.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var state in _personalizationPreviewState)
+            {
+                if (state.Key == null)
+                {
+                    continue;
+                }
+
+                state.Key.Opacity = state.Value.Opacity;
+                state.Key.IsHitTestVisible = state.Value.IsHitTestVisible;
+            }
+
+            _personalizationPreviewState.Clear();
+            _isPersonalizationPreviewActive = false;
+            _personalizationPreviewHostElement = null;
+            Background = _savedPageBackground;
+            GetParentSettingsPage()?.ExitPreviewHoldMode();
+        }
+
+        private void ApplyPersonalizationPreviewInsideTopLevel(FrameworkElement topLevel, FrameworkElement previewHost)
+        {
+            if (topLevel == null || previewHost == null)
+            {
+                return;
+            }
+
+            foreach (var element in EnumerateSelfAndDescendants(topLevel))
+            {
+                if (element == null)
+                {
+                    continue;
+                }
+
+                var isOnPreviewPath = IsPersonalizationAncestorOrSelf(element, previewHost) ||
+                                      IsPersonalizationAncestorOrSelf(previewHost, element);
+
+                if (ReferenceEquals(element, previewHost))
+                {
+                    SaveAndApplyPersonalizationPreviewState(element, _activePreviewHostOpacity, isHitTestVisible: true);
+                }
+                else if (isOnPreviewPath)
+                {
+                    SaveAndApplyPersonalizationPreviewState(element, 1.0, isHitTestVisible: true);
+                }
+                else
+                {
+                    SaveAndApplyPersonalizationPreviewState(element, 0.0, isHitTestVisible: false);
+                }
+            }
+        }
+
+        private FrameworkElement FindPersonalizationTopLevelContainer(FrameworkElement element)
+        {
+            if (element == null || PersonalizationSettingsRootStack == null)
+            {
+                return null;
+            }
+
+            var current = element as DependencyObject;
+            while (current != null)
+            {
+                var parent = VisualTreeHelper.GetParent(current);
+                if (ReferenceEquals(parent, PersonalizationSettingsRootStack))
+                {
+                    return current as FrameworkElement;
+                }
+
+                current = parent;
+            }
+
+            return null;
+        }
+
+        private FrameworkElement GetPersonalizationPreviewHostElement(FrameworkElement sourceControl)
+        {
+            if (sourceControl == null)
+            {
+                return null;
+            }
+
+            if (sourceControl is Slider)
+            {
+                var current = sourceControl as DependencyObject;
+                while (current != null)
+                {
+                    if (current is StackPanel horizontalStack &&
+                        horizontalStack.Orientation == Orientation.Horizontal)
+                    {
+                        return horizontalStack;
+                    }
+
+                    current = VisualTreeHelper.GetParent(current);
+                }
+
+                return sourceControl;
+            }
+
+            return sourceControl;
+        }
+
+        private bool TryResolvePreviewHostAndOpacity(Control sourceControl, DependencyObject originalSource, out FrameworkElement previewHost, out double previewOpacity)
+        {
+            previewHost = null;
+            previewOpacity = PersonalizationPreviewSliderOpacity;
+
+            if (sourceControl is Slider)
+            {
+                previewHost = GetPersonalizationPreviewHostElement(sourceControl);
+                previewOpacity = PersonalizationPreviewSliderOpacity;
+                return previewHost != null;
+            }
+
+            if (sourceControl is ColorPicker colorPicker)
+            {
+                return TryResolveColorPickerPreviewHost(colorPicker, originalSource, out previewHost, out previewOpacity);
+            }
+
+            return false;
+        }
+
+        private bool TryResolveColorPickerPreviewHost(ColorPicker colorPicker, DependencyObject originalSource, out FrameworkElement previewHost, out double previewOpacity)
+        {
+            previewHost = null;
+            previewOpacity = PersonalizationPreviewColorSpectrumOpacity;
+
+            var current = originalSource;
+            while (current != null && !ReferenceEquals(current, colorPicker))
+            {
+                if (current is ColorSpectrum colorSpectrum)
+                {
+                    previewHost = colorSpectrum;
+                    previewOpacity = PersonalizationPreviewColorSpectrumOpacity;
+                    return true;
+                }
+
+                if (current is Slider slider)
+                {
+                    previewHost = slider;
+                    previewOpacity = PersonalizationPreviewSliderOpacity;
+                    return true;
+                }
+
+                if (current is FrameworkElement element &&
+                    element.GetType().Name.IndexOf("Slider", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    previewHost = element;
+                    previewOpacity = PersonalizationPreviewSliderOpacity;
+                    return true;
+                }
+
+                current = GetParentDependencyObject(current);
+            }
+
+            return false;
+        }
+
+        private static T FindFirstDescendant<T>(DependencyObject root) where T : DependencyObject
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var queue = new Queue<DependencyObject>();
+            queue.Enqueue(root);
+            while (queue.Count > 0)
+            {
+                var node = queue.Dequeue();
+                if (node is T target)
+                {
+                    return target;
+                }
+
+                var childrenCount = VisualTreeHelper.GetChildrenCount(node);
+                for (var i = 0; i < childrenCount; i++)
+                {
+                    queue.Enqueue(VisualTreeHelper.GetChild(node, i));
+                }
+            }
+
+            return null;
+        }
+
+        private IEnumerable<FrameworkElement> EnumerateSelfAndDescendants(FrameworkElement root)
+        {
+            if (root == null)
+            {
+                yield break;
+            }
+
+            var queue = new Queue<DependencyObject>();
+            queue.Enqueue(root);
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                if (current is FrameworkElement currentElement)
+                {
+                    yield return currentElement;
+                }
+
+                var childrenCount = VisualTreeHelper.GetChildrenCount(current);
+                for (var i = 0; i < childrenCount; i++)
+                {
+                    queue.Enqueue(VisualTreeHelper.GetChild(current, i));
+                }
+            }
+        }
+
+        private static bool IsPersonalizationAncestorOrSelf(DependencyObject ancestor, DependencyObject node)
+        {
+            if (ancestor == null || node == null)
+            {
+                return false;
+            }
+
+            var current = node;
+            while (current != null)
+            {
+                if (ReferenceEquals(current, ancestor))
+                {
+                    return true;
+                }
+
+                current = VisualTreeHelper.GetParent(current);
+            }
+
+            return false;
+        }
+
+        private void SaveAndApplyPersonalizationPreviewState(FrameworkElement element, double opacity, bool isHitTestVisible)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            if (!_personalizationPreviewState.ContainsKey(element))
+            {
+                _personalizationPreviewState[element] = (element.Opacity, element.IsHitTestVisible);
+            }
+
+            element.Opacity = opacity;
+            element.IsHitTestVisible = isHitTestVisible;
+        }
+
+        private SettingsPage GetParentSettingsPage()
+        {
+            if (_cachedParentSettingsPage != null)
+            {
+                return _cachedParentSettingsPage;
+            }
+
+            var current = this as DependencyObject;
+            while (current != null)
+            {
+                if (current is SettingsPage settingsPage)
+                {
+                    _cachedParentSettingsPage = settingsPage;
+                    return _cachedParentSettingsPage;
+                }
+
+                current = GetParentDependencyObject(current);
+            }
+
+            return null;
+        }
+
+        private static DependencyObject GetParentDependencyObject(DependencyObject current)
+        {
+            if (current == null)
+            {
+                return null;
+            }
+
+            var visualParent = VisualTreeHelper.GetParent(current);
+            if (visualParent != null)
+            {
+                return visualParent;
+            }
+
+            if (current is FrameworkElement frameworkElement &&
+                frameworkElement.Parent is DependencyObject logicalParent)
+            {
+                return logicalParent;
+            }
+
+            if (current is Page page && page.Frame != null)
+            {
+                return page.Frame;
+            }
+
+            if (current is Frame frame && frame.Parent is DependencyObject frameParent)
+            {
+                return frameParent;
+            }
+
+            return null;
         }
     }
 }
