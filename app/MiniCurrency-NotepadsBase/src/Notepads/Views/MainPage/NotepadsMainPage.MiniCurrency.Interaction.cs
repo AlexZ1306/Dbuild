@@ -712,6 +712,7 @@ namespace Notepads.Views.MainPage
 
             if (ch == '=')
             {
+                TriggerMiniCurrencyCalculatorKeyboardPressVisual("=");
                 EvaluateMiniCurrencyExpression(textBox);
                 args.Handled = true;
                 return;
@@ -730,6 +731,7 @@ namespace Notepads.Views.MainPage
                 return;
             }
 
+            TriggerMiniCurrencyCalculatorKeyboardPressVisual(ch.ToString());
             AppendMiniCurrencyCalculatorToken(textBox, ch);
             args.Handled = true;
         }
@@ -786,6 +788,7 @@ namespace Notepads.Views.MainPage
                 case VirtualKey.Enter:
                     if (TryGetMiniCurrencyCalculatorActiveTextBox(out var activeTextBox))
                     {
+                        TriggerMiniCurrencyCalculatorKeyboardPressVisual("=");
                         EvaluateMiniCurrencyExpression(activeTextBox);
                         args.Handled = true;
                     }
@@ -800,6 +803,7 @@ namespace Notepads.Views.MainPage
 
             if (args.VirtualKey == VirtualKey.Back)
             {
+                TriggerMiniCurrencyCalculatorKeyboardPressVisual("Backspace");
                 ApplyMiniCurrencyCalculatorBackspace(textBox);
                 args.Handled = true;
                 return;
@@ -807,8 +811,74 @@ namespace Notepads.Views.MainPage
 
             if (args.VirtualKey == VirtualKey.Delete)
             {
+                TriggerMiniCurrencyCalculatorKeyboardPressVisual("AC");
                 ApplyMiniCurrencyCalculatorClear(textBox);
                 args.Handled = true;
+            }
+        }
+
+        private async void TriggerMiniCurrencyCalculatorKeyboardPressVisual(string token)
+        {
+            var button = GetMiniCurrencyCalculatorButtonByToken(token);
+            if (button == null)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyCalculatorKeyboardStateVisual(button, "ButtonBackgroundPressed", "ButtonForegroundPressed");
+            await global::System.Threading.Tasks.Task.Delay(90);
+            ApplyMiniCurrencyCalculatorKeyboardStateVisual(button, "ButtonBackground", "ButtonForeground");
+        }
+
+        private static void ApplyMiniCurrencyCalculatorKeyboardStateVisual(Button button, string backgroundResourceKey, string foregroundResourceKey)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            if (button.Resources.ContainsKey(backgroundResourceKey) &&
+                button.Resources[backgroundResourceKey] is SolidColorBrush backgroundBrush)
+            {
+                button.Background = new SolidColorBrush(backgroundBrush.Color);
+            }
+
+            if (button.Resources.ContainsKey(foregroundResourceKey) &&
+                button.Resources[foregroundResourceKey] is SolidColorBrush foregroundBrush)
+            {
+                button.Foreground = new SolidColorBrush(foregroundBrush.Color);
+            }
+        }
+
+        private Button GetMiniCurrencyCalculatorButtonByToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return null;
+            }
+
+            switch (token.Trim())
+            {
+                case "0": return MiniCurrencyCalcDigit0Button;
+                case "1": return MiniCurrencyCalcDigit1Button;
+                case "2": return MiniCurrencyCalcDigit2Button;
+                case "3": return MiniCurrencyCalcDigit3Button;
+                case "4": return MiniCurrencyCalcDigit4Button;
+                case "5": return MiniCurrencyCalcDigit5Button;
+                case "6": return MiniCurrencyCalcDigit6Button;
+                case "7": return MiniCurrencyCalcDigit7Button;
+                case "8": return MiniCurrencyCalcDigit8Button;
+                case "9": return MiniCurrencyCalcDigit9Button;
+                case ",": return MiniCurrencyCalcCommaButton;
+                case "%": return MiniCurrencyCalcPercentButton;
+                case "/": return MiniCurrencyCalcDivideButton;
+                case "*": return MiniCurrencyCalcMultiplyButton;
+                case "-": return MiniCurrencyCalcMinusButton;
+                case "+": return MiniCurrencyCalcPlusButton;
+                case "=": return MiniCurrencyCalcEqualsButton;
+                case "AC": return MiniCurrencyCalcAcButton;
+                case "Backspace": return MiniCurrencyCalcBackspaceButton;
+                default: return null;
             }
         }
 

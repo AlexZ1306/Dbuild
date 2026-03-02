@@ -46,6 +46,8 @@ namespace Notepads.Views.MainPage
         private const double MiniCurrencyBaseCalculatorBottomPadding = 16;
         private const double MiniCurrencyBaseHorizontalLayoutMargin = 36;
         private const double MiniCurrencyBaseTopLayoutMargin = 16;
+        private const double MiniCurrencyCalculatorHoverDarkenFactor = 0.84;
+        private const double MiniCurrencyCalculatorPressedDarkenFactor = 0.72;
         private static readonly Color MiniCurrencyAdaptiveTextDarkColor = Color.FromArgb(255, 0x3E, 0x3E, 0x3E);
         private static readonly Color MiniCurrencyAdaptiveTextLightColor = Color.FromArgb(255, 0xF2, 0xF2, 0xF2);
 
@@ -641,39 +643,66 @@ namespace Notepads.Views.MainPage
             var digitBackground = GetMiniCurrencyCalculatorDigitButtonsBackgroundColor();
             var operatorBackground = GetMiniCurrencyCalculatorOperatorButtonsBackgroundColor();
             var equalsBackground = GetMiniCurrencyCalculatorEqualsButtonBackgroundColor();
-            var digitBackgroundBrush = new SolidColorBrush(digitBackground);
-            var operatorBackgroundBrush = new SolidColorBrush(operatorBackground);
-            var equalsBackgroundBrush = new SolidColorBrush(equalsBackground);
-            var effectiveDigitBackground = GetMiniCurrencyEffectiveCardColor(digitBackground);
-            var effectiveOperatorBackground = GetMiniCurrencyEffectiveCardColor(operatorBackground);
-            var effectiveEqualsBackground = GetMiniCurrencyEffectiveCardColor(equalsBackground);
-            var digitTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveDigitBackground));
-            var operatorTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveOperatorBackground));
-            var equalsTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveEqualsBackground));
 
             foreach (var button in GetMiniCurrencyCalculatorDigitButtons())
             {
-                if (button != null)
-                {
-                    button.Background = digitBackgroundBrush;
-                    button.Foreground = digitTextBrush;
-                }
+                ApplyMiniCurrencyCalculatorButtonPalette(button, digitBackground);
             }
 
             foreach (var button in GetMiniCurrencyCalculatorOperatorButtons())
             {
-                if (button != null)
-                {
-                    button.Background = operatorBackgroundBrush;
-                    button.Foreground = operatorTextBrush;
-                }
+                ApplyMiniCurrencyCalculatorButtonPalette(button, operatorBackground);
             }
 
-            if (MiniCurrencyCalcEqualsButton != null)
+            ApplyMiniCurrencyCalculatorButtonPalette(MiniCurrencyCalcEqualsButton, equalsBackground);
+        }
+
+        private void ApplyMiniCurrencyCalculatorButtonPalette(Button button, Color baseBackground)
+        {
+            if (button == null)
             {
-                MiniCurrencyCalcEqualsButton.Background = equalsBackgroundBrush;
-                MiniCurrencyCalcEqualsButton.Foreground = equalsTextBrush;
+                return;
             }
+
+            var hoverBackground = DarkenMiniCurrencyColor(baseBackground, MiniCurrencyCalculatorHoverDarkenFactor);
+            var pressedBackground = DarkenMiniCurrencyColor(baseBackground, MiniCurrencyCalculatorPressedDarkenFactor);
+
+            var baseForeground = GetMiniCurrencyAdaptiveTextColor(GetMiniCurrencyEffectiveCardColor(baseBackground));
+            var hoverForeground = GetMiniCurrencyAdaptiveTextColor(GetMiniCurrencyEffectiveCardColor(hoverBackground));
+            var pressedForeground = GetMiniCurrencyAdaptiveTextColor(GetMiniCurrencyEffectiveCardColor(pressedBackground));
+
+            button.Background = new SolidColorBrush(baseBackground);
+            button.Foreground = new SolidColorBrush(baseForeground);
+
+            SetMiniCurrencyButtonStateBrush(button, "ButtonBackground", baseBackground);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonBackgroundPointerOver", hoverBackground);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonBackgroundPressed", pressedBackground);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonForeground", baseForeground);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonForegroundPointerOver", hoverForeground);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonForegroundPressed", pressedForeground);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonBorderBrush", Colors.Transparent);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonBorderBrushPointerOver", Colors.Transparent);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonBorderBrushPressed", Colors.Transparent);
+        }
+
+        private static void SetMiniCurrencyButtonStateBrush(Button button, string key, Color color)
+        {
+            if (button == null || string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+
+            button.Resources[key] = new SolidColorBrush(color);
+        }
+
+        private static Color DarkenMiniCurrencyColor(Color color, double factor)
+        {
+            var normalizedFactor = Math.Max(0, Math.Min(1, factor));
+            return Color.FromArgb(
+                color.A,
+                (byte)Math.Round(color.R * normalizedFactor),
+                (byte)Math.Round(color.G * normalizedFactor),
+                (byte)Math.Round(color.B * normalizedFactor));
         }
 
         private Color GetMiniCurrencyCalculatorDigitButtonsBackgroundColor()
