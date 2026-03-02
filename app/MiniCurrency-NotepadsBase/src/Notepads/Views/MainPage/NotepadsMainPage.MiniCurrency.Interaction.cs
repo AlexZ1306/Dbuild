@@ -427,6 +427,7 @@ namespace Notepads.Views.MainPage
                 _miniCurrencyDraggingRow.Opacity = 1.0;
                 _miniCurrencyDraggingRow.Width = double.NaN;
                 ApplyMiniCurrencyUiScaleToRow(_miniCurrencyDraggingRow);
+                _miniCurrencyDraggingRow.HorizontalAlignment = HorizontalAlignment.Left;
 
                 CurrencyRowsHost.Children.Remove(_miniCurrencyDragPlaceholder);
                 if (placeholderIndex > CurrencyRowsHost.Children.Count)
@@ -434,6 +435,7 @@ namespace Notepads.Views.MainPage
                     placeholderIndex = CurrencyRowsHost.Children.Count;
                 }
                 CurrencyRowsHost.Children.Insert(placeholderIndex, _miniCurrencyDraggingRow);
+                UpdateMiniCurrencyRowWidths();
 
                 if (dragRoot != null)
                 {
@@ -508,6 +510,7 @@ namespace Notepads.Views.MainPage
                 _miniCurrencyDraggingRow.Opacity = 1.0;
                 _miniCurrencyDraggingRow.Width = double.NaN;
                 ApplyMiniCurrencyUiScaleToRow(_miniCurrencyDraggingRow);
+                _miniCurrencyDraggingRow.HorizontalAlignment = HorizontalAlignment.Left;
 
                 if (_miniCurrencyDragPlaceholder != null)
                 {
@@ -519,6 +522,8 @@ namespace Notepads.Views.MainPage
                     placeholderIndex = Math.Max(0, Math.Min(placeholderIndex, CurrencyRowsHost.Children.Count));
                     CurrencyRowsHost.Children.Insert(placeholderIndex, _miniCurrencyDraggingRow);
                 }
+
+                UpdateMiniCurrencyRowWidths();
 
                 if (saveOrder)
                 {
