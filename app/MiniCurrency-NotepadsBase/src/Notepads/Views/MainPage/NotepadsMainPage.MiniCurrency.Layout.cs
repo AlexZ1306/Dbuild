@@ -10,6 +10,7 @@ namespace Notepads.Views.MainPage
     using System.Collections.Generic;
     using System.Linq;
     using Windows.Data.Json;
+    using Windows.Foundation;
     using Windows.Storage;
     using Windows.UI;
     using Windows.UI.ViewManagement;
@@ -66,8 +67,9 @@ namespace Notepads.Views.MainPage
         private const double MiniCurrencyBaseCalculatorPlusIconHeight = 17;
         private const double MiniCurrencyBaseCalculatorEqualsIconWidth = 17;
         private const double MiniCurrencyBaseCalculatorEqualsIconHeight = 14;
-        private const double MiniCurrencyMainContentAppearOffset = 250;
-        private const int MiniCurrencyMainContentAppearDurationMs = 250;
+        private const double MiniCurrencyMainContentAppearStartScale = 0.965;
+        private const double MiniCurrencyMainContentDisappearEndScale = 0.965;
+        private const int MiniCurrencyMainContentAppearDurationMs = 100;
         private const int MiniCurrencyMainContentAppearDelayMs = 300;
         private static readonly Color MiniCurrencyAdaptiveTextDarkColor = Color.FromArgb(255, 0x3E, 0x3E, 0x3E);
         private static readonly Color MiniCurrencyAdaptiveTextLightColor = Color.FromArgb(255, 0xF2, 0xF2, 0xF2);
@@ -1154,7 +1156,7 @@ namespace Notepads.Views.MainPage
                     CurrencyRowsScrollViewer.Visibility = Visibility.Visible;
                     if (animateCurrencies)
                     {
-                        AnimateMiniCurrencyMainContentAppearance(CurrencyRowsScrollViewer, -MiniCurrencyMainContentAppearOffset);
+                        AnimateMiniCurrencyMainContentAppearance(CurrencyRowsScrollViewer);
                     }
                     else
                     {
@@ -1165,7 +1167,6 @@ namespace Notepads.Views.MainPage
                 {
                     AnimateMiniCurrencyMainContentDisappearance(
                         CurrencyRowsScrollViewer,
-                        -MiniCurrencyMainContentAppearOffset,
                         () => !AppSettingsService.MiniCurrencyShowCurrencies);
                 }
                 else
@@ -1183,7 +1184,7 @@ namespace Notepads.Views.MainPage
                     if (animateCalculator)
                     {
                         var delay = animateCurrencies ? MiniCurrencyMainContentAppearDelayMs : 0;
-                        AnimateMiniCurrencyMainContentAppearance(MiniCurrencyCalculatorHost, MiniCurrencyMainContentAppearOffset, delay);
+                        AnimateMiniCurrencyMainContentAppearance(MiniCurrencyCalculatorHost, delay);
                     }
                     else
                     {
@@ -1194,7 +1195,6 @@ namespace Notepads.Views.MainPage
                 {
                     AnimateMiniCurrencyMainContentDisappearance(
                         MiniCurrencyCalculatorHost,
-                        MiniCurrencyMainContentAppearOffset,
                         () => !AppSettingsService.MiniCurrencyShowCalculator);
                 }
                 else
@@ -1233,10 +1233,44 @@ namespace Notepads.Views.MainPage
             }
 
             element.Opacity = 1;
-            if (element.RenderTransform is TranslateTransform translateTransform)
+            if (element.RenderTransform is ScaleTransform scaleTransform)
+            {
+                scaleTransform.ScaleX = 1;
+                scaleTransform.ScaleY = 1;
+            }
+            else if (element.RenderTransform is CompositeTransform compositeTransform)
+            {
+                compositeTransform.ScaleX = 1;
+                compositeTransform.ScaleY = 1;
+                compositeTransform.TranslateX = 0;
+                compositeTransform.TranslateY = 0;
+            }
+            else if (element.RenderTransform is TranslateTransform translateTransform)
             {
                 translateTransform.Y = 0;
             }
+        }
+
+        private static ScaleTransform EnsureMiniCurrencyMainContentScaleTransform(FrameworkElement element)
+        {
+            if (element?.RenderTransform is ScaleTransform scaleTransform)
+            {
+                return scaleTransform;
+            }
+
+            scaleTransform = new ScaleTransform
+            {
+                ScaleX = 1,
+                ScaleY = 1
+            };
+
+            if (element != null)
+            {
+                element.RenderTransform = scaleTransform;
+                element.RenderTransformOrigin = new Point(0.5, 0.5);
+            }
+
+            return scaleTransform;
         }
 
         private bool IsMiniCurrencyAnimationEnabled()
@@ -1251,28 +1285,27 @@ namespace Notepads.Views.MainPage
             }
         }
 
-        private void AnimateMiniCurrencyMainContentAppearance(FrameworkElement element, double fromOffsetY, double beginDelayMs = 0)
+        private void AnimateMiniCurrencyMainContentAppearance(FrameworkElement element, double beginDelayMs = 0)
         {
             if (element == null || element.Visibility != Visibility.Visible)
             {
                 return;
             }
 
-            if (!(element.RenderTransform is TranslateTransform translateTransform))
-            {
-                translateTransform = new TranslateTransform();
-                element.RenderTransform = translateTransform;
-            }
+            var scaleTransform = EnsureMiniCurrencyMainContentScaleTransform(element);
 
             if (!IsMiniCurrencyAnimationEnabled())
             {
                 element.Opacity = 1;
-                translateTransform.Y = 0;
+                scaleTransform.ScaleX = 1;
+                scaleTransform.ScaleY = 1;
                 return;
             }
 
             element.Opacity = 0;
-            translateTransform.Y = fromOffsetY;
+            element.RenderTransformOrigin = new Point(0.5, 0.5);
+            scaleTransform.ScaleX = MiniCurrencyMainContentAppearStartScale;
+            scaleTransform.ScaleY = MiniCurrencyMainContentAppearStartScale;
 
             var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
             var delay = TimeSpan.FromMilliseconds(Math.Max(0, beginDelayMs));
@@ -1288,10 +1321,20 @@ namespace Notepads.Views.MainPage
                 EnableDependentAnimation = true
             };
 
-            var slide = new DoubleAnimation
+            var scaleX = new DoubleAnimation
             {
-                From = fromOffsetY,
-                To = 0,
+                From = MiniCurrencyMainContentAppearStartScale,
+                To = 1,
+                BeginTime = delay,
+                Duration = duration,
+                EasingFunction = easing,
+                EnableDependentAnimation = true
+            };
+
+            var scaleY = new DoubleAnimation
+            {
+                From = MiniCurrencyMainContentAppearStartScale,
+                To = 1,
                 BeginTime = delay,
                 Duration = duration,
                 EasingFunction = easing,
@@ -1301,27 +1344,27 @@ namespace Notepads.Views.MainPage
             Storyboard.SetTarget(fade, element);
             Storyboard.SetTargetProperty(fade, "Opacity");
 
-            Storyboard.SetTarget(slide, element);
-            Storyboard.SetTargetProperty(slide, "(UIElement.RenderTransform).(TranslateTransform.Y)");
+            Storyboard.SetTarget(scaleX, element);
+            Storyboard.SetTargetProperty(scaleX, "(UIElement.RenderTransform).(ScaleTransform.ScaleX)");
+
+            Storyboard.SetTarget(scaleY, element);
+            Storyboard.SetTargetProperty(scaleY, "(UIElement.RenderTransform).(ScaleTransform.ScaleY)");
 
             var storyboard = new Storyboard();
             storyboard.Children.Add(fade);
-            storyboard.Children.Add(slide);
+            storyboard.Children.Add(scaleX);
+            storyboard.Children.Add(scaleY);
             storyboard.Begin();
         }
 
-        private void AnimateMiniCurrencyMainContentDisappearance(FrameworkElement element, double toOffsetY, Func<bool> shouldCollapse)
+        private void AnimateMiniCurrencyMainContentDisappearance(FrameworkElement element, Func<bool> shouldCollapse)
         {
             if (element == null)
             {
                 return;
             }
 
-            if (!(element.RenderTransform is TranslateTransform translateTransform))
-            {
-                translateTransform = new TranslateTransform();
-                element.RenderTransform = translateTransform;
-            }
+            var scaleTransform = EnsureMiniCurrencyMainContentScaleTransform(element);
 
             if (!IsMiniCurrencyAnimationEnabled())
             {
@@ -1332,9 +1375,11 @@ namespace Notepads.Views.MainPage
 
             element.Visibility = Visibility.Visible;
             element.Opacity = 1;
-            translateTransform.Y = 0;
+            element.RenderTransformOrigin = new Point(0.5, 0.5);
+            scaleTransform.ScaleX = 1;
+            scaleTransform.ScaleY = 1;
 
-            var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+            var easing = new CubicEase { EasingMode = EasingMode.EaseIn };
             var duration = new Duration(TimeSpan.FromMilliseconds(MiniCurrencyMainContentAppearDurationMs));
 
             var fade = new DoubleAnimation
@@ -1346,10 +1391,19 @@ namespace Notepads.Views.MainPage
                 EnableDependentAnimation = true
             };
 
-            var slide = new DoubleAnimation
+            var scaleX = new DoubleAnimation
             {
-                From = 0,
-                To = toOffsetY,
+                From = 1,
+                To = MiniCurrencyMainContentDisappearEndScale,
+                Duration = duration,
+                EasingFunction = easing,
+                EnableDependentAnimation = true
+            };
+
+            var scaleY = new DoubleAnimation
+            {
+                From = 1,
+                To = MiniCurrencyMainContentDisappearEndScale,
                 Duration = duration,
                 EasingFunction = easing,
                 EnableDependentAnimation = true
@@ -1358,12 +1412,16 @@ namespace Notepads.Views.MainPage
             Storyboard.SetTarget(fade, element);
             Storyboard.SetTargetProperty(fade, "Opacity");
 
-            Storyboard.SetTarget(slide, element);
-            Storyboard.SetTargetProperty(slide, "(UIElement.RenderTransform).(TranslateTransform.Y)");
+            Storyboard.SetTarget(scaleX, element);
+            Storyboard.SetTargetProperty(scaleX, "(UIElement.RenderTransform).(ScaleTransform.ScaleX)");
+
+            Storyboard.SetTarget(scaleY, element);
+            Storyboard.SetTargetProperty(scaleY, "(UIElement.RenderTransform).(ScaleTransform.ScaleY)");
 
             var storyboard = new Storyboard();
             storyboard.Children.Add(fade);
-            storyboard.Children.Add(slide);
+            storyboard.Children.Add(scaleX);
+            storyboard.Children.Add(scaleY);
             storyboard.Completed += (s, e) =>
             {
                 if (shouldCollapse == null || shouldCollapse())
