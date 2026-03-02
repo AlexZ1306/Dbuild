@@ -33,6 +33,7 @@ namespace Notepads.Views.MainPage
 
             ApplyMiniCurrencyStatusBarMode();
             ApplyMiniCurrencyMainMenuMode();
+            ApplyMiniCurrencyMainLayoutContextMenuMode();
         }
 
         private void ApplyMiniCurrencyStatusBarMode()
@@ -1013,6 +1014,7 @@ namespace Notepads.Views.MainPage
             leftBorder.Tag = code.Trim().ToUpperInvariant();
             leftBorder.Tapped -= MiniCurrencyCodeBlock_Tapped;
             leftBorder.Tapped += MiniCurrencyCodeBlock_Tapped;
+            leftBorder.ContextFlyout = CreateMiniCurrencyCodeBlockContextFlyout(leftBorder.Tag as string);
         }
 
         private async void MiniCurrencyCodeBlock_Tapped(object sender, TappedRoutedEventArgs e)
@@ -1031,6 +1033,188 @@ namespace Notepads.Views.MainPage
             }
 
             await OpenMiniCurrencyCurrencyPickerPaneAsync(code);
+        }
+
+        private MenuFlyout CreateMiniCurrencyCodeBlockContextFlyout(string code)
+        {
+            code = (code ?? string.Empty).Trim().ToUpperInvariant();
+
+            var flyout = new MenuFlyout();
+            if (MainMenuButtonFlyout?.MenuFlyoutPresenterStyle != null)
+            {
+                flyout.MenuFlyoutPresenterStyle = MainMenuButtonFlyout.MenuFlyoutPresenterStyle;
+            }
+
+            var deleteItem = new MenuFlyoutItem
+            {
+                Text = "Удалить",
+                Icon = new SymbolIcon(Symbol.Delete),
+                Tag = code
+            };
+            deleteItem.Click += MiniCurrencyCodeBlockDeleteMenuItem_Click;
+
+            var changeItem = new MenuFlyoutItem
+            {
+                Text = "Изменить",
+                Icon = new SymbolIcon(Symbol.Edit),
+                Tag = code
+            };
+            changeItem.Click += MiniCurrencyCodeBlockChangeMenuItem_Click;
+
+            var addItem = new MenuFlyoutItem
+            {
+                Text = "Добавить",
+                Icon = new SymbolIcon(Symbol.Add),
+                Tag = code
+            };
+            addItem.Click += MiniCurrencyCodeBlockAddMenuItem_Click;
+
+            flyout.Items.Add(deleteItem);
+            flyout.Items.Add(changeItem);
+            flyout.Items.Add(addItem);
+            return flyout;
+        }
+
+        private void MiniCurrencyCodeBlockDeleteMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is FrameworkElement element) || !(element.Tag is string code))
+            {
+                return;
+            }
+
+            code = code.Trim().ToUpperInvariant();
+            if (SetMiniCurrencyCurrencyVisibility(code, visible: false, updateActiveSelection: false))
+            {
+                RefreshMiniCurrencyCurrencyManagerMenu();
+                RefreshMiniCurrencyCurrencyPickerRowVisualStates();
+            }
+        }
+
+        private async void MiniCurrencyCodeBlockChangeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is FrameworkElement element) || !(element.Tag is string code))
+            {
+                return;
+            }
+
+            code = code.Trim().ToUpperInvariant();
+            await OpenMiniCurrencyCurrencyPickerPaneAsync(code);
+        }
+
+        private async void MiniCurrencyCodeBlockAddMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is FrameworkElement element) || !(element.Tag is string code) || string.IsNullOrWhiteSpace(code))
+            {
+                return;
+            }
+
+            await OpenMiniCurrencyCurrencyManagementPaneAsync();
+        }
+
+        private void ApplyMiniCurrencyMainLayoutContextMenuMode()
+        {
+            if (!IsMiniCurrencyMode || MiniCurrencyMainLayoutGrid == null)
+            {
+                return;
+            }
+
+            MiniCurrencyMainLayoutGrid.ContextFlyout = EnsureMiniCurrencyMainLayoutContextFlyout();
+            MiniCurrencyMainLayoutGrid.ContextRequested -= MiniCurrencyMainLayoutGrid_ContextRequested;
+            MiniCurrencyMainLayoutGrid.ContextRequested += MiniCurrencyMainLayoutGrid_ContextRequested;
+        }
+
+        private MenuFlyout EnsureMiniCurrencyMainLayoutContextFlyout()
+        {
+            if (_miniCurrencyMainLayoutContextFlyout != null)
+            {
+                return _miniCurrencyMainLayoutContextFlyout;
+            }
+
+            var flyout = new MenuFlyout();
+            if (MainMenuButtonFlyout?.MenuFlyoutPresenterStyle != null)
+            {
+                flyout.MenuFlyoutPresenterStyle = MainMenuButtonFlyout.MenuFlyoutPresenterStyle;
+            }
+
+            var manageItem = new MenuFlyoutItem
+            {
+                Text = "Добавить / Удалить",
+                Icon = new SymbolIcon(Symbol.Edit)
+            };
+            manageItem.Click += MiniCurrencyMainLayoutManageCurrenciesMenuItem_Click;
+            flyout.Items.Add(manageItem);
+
+            _miniCurrencyMainLayoutContextFlyout = flyout;
+            return _miniCurrencyMainLayoutContextFlyout;
+        }
+
+        private async void MiniCurrencyMainLayoutManageCurrenciesMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            await OpenMiniCurrencyCurrencyManagementPaneAsync();
+        }
+
+        private void MiniCurrencyMainLayoutGrid_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
+        {
+            if (!IsMiniCurrencyMode || args == null)
+            {
+                return;
+            }
+
+            if (!(args.OriginalSource is DependencyObject source))
+            {
+                return;
+            }
+
+            if (HasMiniCurrencyOwnContextFlyout(source))
+            {
+                return;
+            }
+
+            if (!IsMiniCurrencyEmptyAreaContextRequestSource(source))
+            {
+                args.Handled = true;
+            }
+        }
+
+        private bool HasMiniCurrencyOwnContextFlyout(DependencyObject source)
+        {
+            var current = source;
+            while (current != null && current != MiniCurrencyMainLayoutGrid)
+            {
+                if (current is FrameworkElement element && element.ContextFlyout != null)
+                {
+                    return true;
+                }
+
+                current = VisualTreeHelper.GetParent(current);
+            }
+
+            return false;
+        }
+
+        private bool IsMiniCurrencyEmptyAreaContextRequestSource(DependencyObject source)
+        {
+            var current = source;
+            while (current != null && current != MiniCurrencyMainLayoutGrid)
+            {
+                if (current is Button || current is TextBox)
+                {
+                    return false;
+                }
+
+                if (current is FrameworkElement element)
+                {
+                    if (element.Tag is string code &&
+                        _miniCurrencyRows.ContainsKey(code.Trim().ToUpperInvariant()))
+                    {
+                        return false;
+                    }
+                }
+
+                current = VisualTreeHelper.GetParent(current);
+            }
+
+            return true;
         }
 
         private void ApplyMiniCurrencyMainMenuMode()
