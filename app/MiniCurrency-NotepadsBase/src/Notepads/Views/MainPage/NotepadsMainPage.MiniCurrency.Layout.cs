@@ -25,9 +25,9 @@ namespace Notepads.Views.MainPage
         private const double MiniCurrencyUiScaleMinFactor = 0.5;
         private const double MiniCurrencyUiScaleMaxFactor = 1.5;
         private const double MiniCurrencyBaseRowHeight = 56;
-        private const double MiniCurrencyBaseRowSpacing = 12;
+        private const double MiniCurrencyBaseRowSpacing = 7;
         private const double MiniCurrencyBaseLeftColumnWidth = 132;
-        private const double MiniCurrencyBaseMiddleGapWidth = 14;
+        private const double MiniCurrencyBaseMiddleGapWidth = 7;
         private const double MiniCurrencyBaseLeftCardCornerRadius = 14;
         private const double MiniCurrencyBaseValueCardCornerRadius = 16;
         private const double MiniCurrencyBaseFlagSize = 30;
