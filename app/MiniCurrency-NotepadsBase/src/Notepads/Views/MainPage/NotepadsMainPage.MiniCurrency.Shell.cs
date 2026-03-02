@@ -1030,6 +1030,8 @@ namespace Notepads.Views.MainPage
                 MenuFullScreenButton.Visibility = Visibility.Collapsed;
                 MenuCompactOverlayButton.Visibility = Visibility.Collapsed;
                 MenuManageCurrenciesButton.Visibility = Visibility.Collapsed;
+                MenuShowCurrenciesButton.Visibility = Visibility.Collapsed;
+                MenuShowCalculatorButton.Visibility = Visibility.Collapsed;
                 MenuSettingsButton.Visibility = Visibility.Collapsed;
             }
             else
@@ -1037,6 +1039,8 @@ namespace Notepads.Views.MainPage
                 MenuFullScreenButton.Visibility = Visibility.Visible;
                 MenuCompactOverlayButton.Visibility = Visibility.Visible;
                 MenuManageCurrenciesButton.Visibility = Visibility.Visible;
+                MenuShowCurrenciesButton.Visibility = Visibility.Visible;
+                MenuShowCalculatorButton.Visibility = Visibility.Visible;
                 MenuSettingsButton.Visibility = Visibility.Visible;
             }
 
@@ -1073,6 +1077,45 @@ namespace Notepads.Views.MainPage
             {
                 item.Visibility = Visibility.Collapsed;
             }
+
+            UpdateMiniCurrencyVisibilityMenuItemsVisual();
+        }
+
+        private void UpdateMiniCurrencyVisibilityMenuItemsVisual()
+        {
+            if (MenuShowCurrenciesButton != null)
+            {
+                MenuShowCurrenciesButton.KeyboardAcceleratorTextOverride =
+                    AppSettingsService.MiniCurrencyShowCurrencies ? MiniCurrencyMainMenuCheckedMark : string.Empty;
+            }
+
+            if (MenuShowCalculatorButton != null)
+            {
+                MenuShowCalculatorButton.KeyboardAcceleratorTextOverride =
+                    AppSettingsService.MiniCurrencyShowCalculator ? MiniCurrencyMainMenuCheckedMark : string.Empty;
+            }
+        }
+
+        private void MenuShowCurrenciesButton_Click(object sender, RoutedEventArgs e)
+        {
+            AppSettingsService.MiniCurrencyShowCurrencies = !AppSettingsService.MiniCurrencyShowCurrencies;
+        }
+
+        private void MenuShowCalculatorButton_Click(object sender, RoutedEventArgs e)
+        {
+            AppSettingsService.MiniCurrencyShowCalculator = !AppSettingsService.MiniCurrencyShowCalculator;
+        }
+
+        private void MiniCurrencyShowCurrenciesChanged(object sender, bool show)
+        {
+            ApplyMiniCurrencyMainContentVisibility();
+            UpdateMiniCurrencyVisibilityMenuItemsVisual();
+        }
+
+        private void MiniCurrencyShowCalculatorChanged(object sender, bool show)
+        {
+            ApplyMiniCurrencyMainContentVisibility();
+            UpdateMiniCurrencyVisibilityMenuItemsVisual();
         }
 
         private ApplicationDataContainer MiniCurrencySettings => ApplicationData.Current.LocalSettings;

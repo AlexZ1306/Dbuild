@@ -38,6 +38,8 @@ namespace Notepads.Services
         public static event EventHandler<Color> OnMiniCurrencyCalculatorDigitTextColorChanged;
         public static event EventHandler<Color> OnMiniCurrencyCalculatorOperationTextColorChanged;
         public static event EventHandler<int> OnMiniCurrencyCalculatorButtonsOpacityPercentChanged;
+        public static event EventHandler<bool> OnMiniCurrencyShowCurrenciesChanged;
+        public static event EventHandler<bool> OnMiniCurrencyShowCalculatorChanged;
         public static event EventHandler<bool> OnSessionBackupAndRestoreOptionChanged;
         public static event EventHandler<bool> OnHighlightMisspelledWordsChanged;
 
@@ -240,6 +242,8 @@ namespace Notepads.Services
         private static Color _miniCurrencyCalculatorDigitTextColor = Color.FromArgb(255, 58, 58, 58);
         private static Color _miniCurrencyCalculatorOperationTextColor = Color.FromArgb(255, 58, 58, 58);
         private static int _miniCurrencyCalculatorButtonsOpacityPercent = 100;
+        private static bool _miniCurrencyShowCurrencies = true;
+        private static bool _miniCurrencyShowCalculator = true;
 
         public static bool ShowStatusBar
         {
@@ -396,6 +400,30 @@ namespace Notepads.Services
                 _miniCurrencyCalculatorButtonsOpacityPercent = normalized;
                 OnMiniCurrencyCalculatorButtonsOpacityPercentChanged?.Invoke(null, normalized);
                 ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyCalculatorButtonsOpacityPercentInt, normalized);
+            }
+        }
+
+        public static bool MiniCurrencyShowCurrencies
+        {
+            get => _miniCurrencyShowCurrencies;
+            set
+            {
+                if (_miniCurrencyShowCurrencies == value) return;
+                _miniCurrencyShowCurrencies = value;
+                OnMiniCurrencyShowCurrenciesChanged?.Invoke(null, value);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyShowCurrenciesBool, value);
+            }
+        }
+
+        public static bool MiniCurrencyShowCalculator
+        {
+            get => _miniCurrencyShowCalculator;
+            set
+            {
+                if (_miniCurrencyShowCalculator == value) return;
+                _miniCurrencyShowCalculator = value;
+                OnMiniCurrencyShowCalculatorChanged?.Invoke(null, value);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyShowCalculatorBool, value);
             }
         }
 
@@ -648,6 +676,24 @@ namespace Notepads.Services
             else
             {
                 _miniCurrencyCalculatorButtonsOpacityPercent = 100;
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyShowCurrenciesBool) is bool showCurrencies)
+            {
+                _miniCurrencyShowCurrencies = showCurrencies;
+            }
+            else
+            {
+                _miniCurrencyShowCurrencies = true;
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyShowCalculatorBool) is bool showCalculator)
+            {
+                _miniCurrencyShowCalculator = showCalculator;
+            }
+            else
+            {
+                _miniCurrencyShowCalculator = true;
             }
         }
 

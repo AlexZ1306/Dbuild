@@ -221,6 +221,12 @@
                                                     <KeyboardAccelerator Key="F2" IsEnabled="False"/>
                                                 </MenuFlyoutItem.KeyboardAccelerators>
                                             </MenuFlyoutItem>
+                                            <MenuFlyoutItem x:Name="MenuShowCurrenciesButton"
+                                                            Text="Валюты"
+                                                            Visibility="Collapsed"/>
+                                            <MenuFlyoutItem x:Name="MenuShowCalculatorButton"
+                                                            Text="Калькулятор"
+                                                            Visibility="Collapsed"/>
                                             <MenuFlyoutItem x:Uid="MainMenu_Button_Settings" x:Name="MenuSettingsButton" Icon="Setting">
                                                 <MenuFlyoutItem.KeyboardAccelerators>
                                                     <KeyboardAccelerator Key="F1" IsEnabled="False"/>
@@ -527,6 +533,18 @@
                                         </StackPanel>
                                     </Grid>
                                 </ScrollViewer>
+
+                                <TextBlock Grid.Row="0"
+                                           x:Name="MiniCurrencyEmptyStateText"
+                                           Text="Пусто. Включите «Валюты» или «Калькулятор» в меню."
+                                           Visibility="Collapsed"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="360"
+                                           Opacity="0.85"
+                                           FontSize="16"/>
 
                                 <Grid Grid.Row="1"
                                       x:Name="MiniCurrencyCalculatorHost"

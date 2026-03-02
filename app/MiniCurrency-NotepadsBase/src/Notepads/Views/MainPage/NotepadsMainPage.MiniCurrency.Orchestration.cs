@@ -70,6 +70,10 @@ namespace Notepads.Views.MainPage
             AppSettingsService.OnMiniCurrencyCalculatorOperationTextColorChanged += MiniCurrencyCalculatorOperationTextColorChanged;
             AppSettingsService.OnMiniCurrencyCalculatorButtonsOpacityPercentChanged -= MiniCurrencyCalculatorButtonsOpacityPercentChanged;
             AppSettingsService.OnMiniCurrencyCalculatorButtonsOpacityPercentChanged += MiniCurrencyCalculatorButtonsOpacityPercentChanged;
+            AppSettingsService.OnMiniCurrencyShowCurrenciesChanged -= MiniCurrencyShowCurrenciesChanged;
+            AppSettingsService.OnMiniCurrencyShowCurrenciesChanged += MiniCurrencyShowCurrenciesChanged;
+            AppSettingsService.OnMiniCurrencyShowCalculatorChanged -= MiniCurrencyShowCalculatorChanged;
+            AppSettingsService.OnMiniCurrencyShowCalculatorChanged += MiniCurrencyShowCalculatorChanged;
             ThemeSettingsService.OnAccentColorChanged -= MiniCurrencyThemeSettingsService_OnAccentColorChanged;
             ThemeSettingsService.OnAccentColorChanged += MiniCurrencyThemeSettingsService_OnAccentColorChanged;
 
@@ -89,6 +93,8 @@ namespace Notepads.Views.MainPage
             SetMiniCurrencyRatesStatus("Загрузка курсов...");
             HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
             ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+            ApplyMiniCurrencyMainContentVisibility();
+            UpdateMiniCurrencyVisibilityMenuItemsVisual();
             _ = LoadMiniCurrencyRatesAsync(silent: true);
         }
 

@@ -37,6 +37,8 @@ namespace Notepads.Views.MainPage
             MenuPrintAllButton.Click += async (sender, args) => await PrintAllAsync(NotepadsCore.GetAllTextEditors());
             MenuSettingsButton.Click += (sender, args) => OpenSettingsPane();
             MenuManageCurrenciesButton.Click += async (sender, args) => await OpenMiniCurrencyCurrencyManagementPaneAsync();
+            MenuShowCurrenciesButton.Click += MenuShowCurrenciesButton_Click;
+            MenuShowCalculatorButton.Click += MenuShowCalculatorButton_Click;
 
             if (!App.IsPrimaryInstance)
             {
@@ -55,6 +57,8 @@ namespace Notepads.Views.MainPage
                 MenuPrintButton.Visibility = Visibility.Collapsed;
                 MenuPrintAllButton.Visibility = Visibility.Collapsed;
                 MenuManageCurrenciesButton.Visibility = Visibility.Collapsed;
+                MenuShowCurrenciesButton.Visibility = Visibility.Collapsed;
+                MenuShowCalculatorButton.Visibility = Visibility.Collapsed;
                 MenuSettingsButton.Visibility = Visibility.Collapsed;
             }
 

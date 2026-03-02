@@ -93,6 +93,7 @@ namespace Notepads.Views.MainPage
         private string _miniCurrencyLatestStatusText = "Загрузка курсов...";
         private double _miniCurrencyWindowWidthBeforePaneOpen = -1;
         private MenuFlyoutItem _miniCurrencyRefreshRatesMenuItem;
+        private const string MiniCurrencyMainMenuCheckedMark = "✓";
         private readonly Dictionary<string, string> _miniCurrencyDisplayNames = new Dictionary<string, string>()
         {
             { "ADA", "Cardano" },

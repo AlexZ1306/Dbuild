@@ -1052,6 +1052,12 @@ namespace Notepads.Views.MainPage
                 CurrencyStatusText.FontSize = ScaleMetric(MiniCurrencyBaseStatusFontSize, factor);
             }
 
+            if (MiniCurrencyEmptyStateText != null)
+            {
+                MiniCurrencyEmptyStateText.FontSize = ScaleMetric(16, factor);
+                MiniCurrencyEmptyStateText.MaxWidth = ScaleMetric(360, factor);
+            }
+
             ApplyMiniCurrencyUiScaleToCalculator(factor);
             UpdateMiniCurrencyCurrencyRowsBottomPadding();
         }
@@ -1124,6 +1130,38 @@ namespace Notepads.Views.MainPage
                     row.HorizontalAlignment = HorizontalAlignment.Left;
                 }
             }
+        }
+
+        private void ApplyMiniCurrencyMainContentVisibility()
+        {
+            var showCurrencies = AppSettingsService.MiniCurrencyShowCurrencies;
+            var showCalculator = AppSettingsService.MiniCurrencyShowCalculator;
+
+            if (CurrencyRowsScrollViewer != null)
+            {
+                CurrencyRowsScrollViewer.Visibility = showCurrencies ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            if (MiniCurrencyCalculatorHost != null)
+            {
+                MiniCurrencyCalculatorHost.Visibility = showCalculator ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            if (MiniCurrencyEmptyStateText != null)
+            {
+                MiniCurrencyEmptyStateText.Visibility = (!showCurrencies && !showCalculator)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+
+            if (!showCurrencies && !showCalculator)
+            {
+                RestoreMiniCurrencyRatesStatus();
+            }
+
+            UpdateMiniCurrencyCurrencyRowsBottomPadding();
+            UpdateMiniCurrencyRowWidths();
+            UpdateMiniCurrencyCalculatorRowWidths();
         }
 
         private void ApplyMiniCurrencyUiScaleToCalculator(double factor)
