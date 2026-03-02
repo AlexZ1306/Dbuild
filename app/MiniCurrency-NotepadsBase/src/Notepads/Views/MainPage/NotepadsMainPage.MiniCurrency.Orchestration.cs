@@ -58,6 +58,18 @@ namespace Notepads.Views.MainPage
             AppSettingsService.OnMiniCurrencyUseDefaultInactiveCardColorChanged += MiniCurrencyUseDefaultInactiveCardColorChanged;
             AppSettingsService.OnMiniCurrencyInactiveCardColorChanged -= MiniCurrencyInactiveCardColorChanged;
             AppSettingsService.OnMiniCurrencyInactiveCardColorChanged += MiniCurrencyInactiveCardColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorUseWindowsEqualsColorChanged -= MiniCurrencyCalculatorUseWindowsEqualsColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorUseWindowsEqualsColorChanged += MiniCurrencyCalculatorUseWindowsEqualsColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorEqualsColorChanged -= MiniCurrencyCalculatorEqualsColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorEqualsColorChanged += MiniCurrencyCalculatorEqualsColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorEqualsButtonOpacityPercentChanged -= MiniCurrencyCalculatorEqualsButtonOpacityPercentChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorEqualsButtonOpacityPercentChanged += MiniCurrencyCalculatorEqualsButtonOpacityPercentChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorDigitTextColorChanged -= MiniCurrencyCalculatorDigitTextColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorDigitTextColorChanged += MiniCurrencyCalculatorDigitTextColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorOperationTextColorChanged -= MiniCurrencyCalculatorOperationTextColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorOperationTextColorChanged += MiniCurrencyCalculatorOperationTextColorChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorButtonsOpacityPercentChanged -= MiniCurrencyCalculatorButtonsOpacityPercentChanged;
+            AppSettingsService.OnMiniCurrencyCalculatorButtonsOpacityPercentChanged += MiniCurrencyCalculatorButtonsOpacityPercentChanged;
             ThemeSettingsService.OnAccentColorChanged -= MiniCurrencyThemeSettingsService_OnAccentColorChanged;
             ThemeSettingsService.OnAccentColorChanged += MiniCurrencyThemeSettingsService_OnAccentColorChanged;
 

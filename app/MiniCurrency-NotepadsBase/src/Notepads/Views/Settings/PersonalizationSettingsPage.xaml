@@ -215,6 +215,116 @@
                         </ColorPicker>
                     </Viewbox>
                 </StackPanel>
+                <TextBlock
+                    x:Name="MiniCurrencyCalculatorStyleTitle"
+                    Text="Стиль кнопок калькулятора"
+                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                    Margin="0,20,0,0"
+                    FontWeight="Normal"/>
+                <TextBlock
+                    x:Name="MiniCurrencyCalculatorEqualsButtonColorTitle"
+                    Text="Цвет кнопки ="
+                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                    Margin="0,20,0,0"
+                    FontWeight="Normal"/>
+                <StackPanel x:Name="MiniCurrencyCalculatorEqualsButtonColorControls" Margin="0,10,0,0">
+                    <ToggleSwitch x:Name="MiniCurrencyCalculatorUseWindowsEqualsColorToggle"
+                                  Style="{StaticResource CustomToggleSwitchStyle}"
+                                  Header="Использовать цвет Windows по умолчанию"
+                                  Margin="0,0,0,8"/>
+                    <Viewbox MaxWidth="300" Stretch="Fill">
+                        <ColorPicker
+                            x:Name="MiniCurrencyCalculatorEqualsButtonColorPicker"
+                            ColorSpectrumShape="Ring"
+                            IsColorSliderVisible="True"
+                            IsColorChannelTextInputVisible="True"
+                            IsHexInputVisible="True"
+                            IsAlphaEnabled="False"
+                            IsAlphaSliderVisible="False"
+                            IsAlphaTextInputVisible="False">
+                        </ColorPicker>
+                    </Viewbox>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Slider Style="{StaticResource CustomSliderStyle}"
+                                x:Name="MiniCurrencyCalculatorEqualsButtonOpacitySlider"
+                                Minimum="0" Maximum="100"
+                                StepFrequency="1"
+                                Margin="0,0,10,0"
+                                Width="200"/>
+                        <TextBlock Text="{x:Bind MiniCurrencyCalculatorEqualsButtonOpacitySlider.Value, Mode=OneWay}"
+                                   Height="{x:Bind MiniCurrencyCalculatorEqualsButtonOpacitySlider.Height, Mode=OneWay}"
+                                   VerticalAlignment="Center"
+                                   FontSize="18"/>
+                        <TextBlock Text="%"
+                                   Height="{x:Bind MiniCurrencyCalculatorEqualsButtonOpacitySlider.Height, Mode=OneWay}"
+                                   VerticalAlignment="Center"
+                                   FontSize="18"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock
+                    x:Name="MiniCurrencyCalculatorDigitTextColorTitle"
+                    Text="Цвет подложки цифр и запятой"
+                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                    Margin="0,20,0,0"
+                    FontWeight="Normal"/>
+                <StackPanel x:Name="MiniCurrencyCalculatorDigitTextColorControls" Margin="0,10,0,0">
+                    <Viewbox MaxWidth="300" Stretch="Fill">
+                        <ColorPicker
+                            x:Name="MiniCurrencyCalculatorDigitTextColorPicker"
+                            ColorSpectrumShape="Ring"
+                            IsColorSliderVisible="True"
+                            IsColorChannelTextInputVisible="True"
+                            IsHexInputVisible="True"
+                            IsAlphaEnabled="False"
+                            IsAlphaSliderVisible="False"
+                            IsAlphaTextInputVisible="False">
+                        </ColorPicker>
+                    </Viewbox>
+                </StackPanel>
+                <TextBlock
+                    x:Name="MiniCurrencyCalculatorOperatorTextColorTitle"
+                    Text="Цвет подложки кнопок операций"
+                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                    Margin="0,20,0,0"
+                    FontWeight="Normal"/>
+                <StackPanel x:Name="MiniCurrencyCalculatorOperatorTextColorControls" Margin="0,10,0,0">
+                    <Viewbox MaxWidth="300" Stretch="Fill">
+                        <ColorPicker
+                            x:Name="MiniCurrencyCalculatorOperatorTextColorPicker"
+                            ColorSpectrumShape="Ring"
+                            IsColorSliderVisible="True"
+                            IsColorChannelTextInputVisible="True"
+                            IsHexInputVisible="True"
+                            IsAlphaEnabled="False"
+                            IsAlphaSliderVisible="False"
+                            IsAlphaTextInputVisible="False">
+                        </ColorPicker>
+                    </Viewbox>
+                </StackPanel>
+                <TextBlock
+                    x:Name="MiniCurrencyCalculatorButtonsOpacityTitle"
+                    Text="Непрозрачность кнопок калькулятора (кроме =)"
+                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                    Margin="0,20,0,0"
+                    FontWeight="Normal"/>
+                <StackPanel x:Name="MiniCurrencyCalculatorButtonsOpacityControls" Margin="0,10,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Slider Style="{StaticResource CustomSliderStyle}"
+                                x:Name="MiniCurrencyCalculatorButtonsOpacitySlider"
+                                Minimum="0" Maximum="100"
+                                StepFrequency="1"
+                                Margin="0,0,10,0"
+                                Width="200"/>
+                        <TextBlock Text="{x:Bind MiniCurrencyCalculatorButtonsOpacitySlider.Value, Mode=OneWay}"
+                                   Height="{x:Bind MiniCurrencyCalculatorButtonsOpacitySlider.Height, Mode=OneWay}"
+                                   VerticalAlignment="Center"
+                                   FontSize="18"/>
+                        <TextBlock Text="%"
+                                   Height="{x:Bind MiniCurrencyCalculatorButtonsOpacitySlider.Height, Mode=OneWay}"
+                                   VerticalAlignment="Center"
+                                   FontSize="18"/>
+                    </StackPanel>
+                </StackPanel>
 
             </StackPanel>
         </ScrollViewer>

@@ -431,6 +431,7 @@ namespace Notepads.Views.MainPage
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
                 HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+                ApplyMiniCurrencyCalculatorVisualSettings();
                 RefreshMiniCurrencyCurrencyPickerRowVisualStates();
             });
         }
@@ -488,6 +489,71 @@ namespace Notepads.Views.MainPage
             }
 
             HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
+        }
+
+        private void MiniCurrencyCalculatorUseWindowsEqualsColorChanged(object sender, bool useWindowsColor)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyCalculatorVisualSettings();
+        }
+
+        private void MiniCurrencyCalculatorEqualsColorChanged(object sender, Color color)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            if (AppSettingsService.MiniCurrencyCalculatorUseWindowsEqualsColor)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyCalculatorVisualSettings();
+        }
+
+        private void MiniCurrencyCalculatorEqualsButtonOpacityPercentChanged(object sender, int percent)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyCalculatorVisualSettings();
+        }
+
+        private void MiniCurrencyCalculatorDigitTextColorChanged(object sender, Color color)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyCalculatorVisualSettings();
+        }
+
+        private void MiniCurrencyCalculatorOperationTextColorChanged(object sender, Color color)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyCalculatorVisualSettings();
+        }
+
+        private void MiniCurrencyCalculatorButtonsOpacityPercentChanged(object sender, int percent)
+        {
+            if (!IsMiniCurrencyMode || !_miniCurrencyInitialized)
+            {
+                return;
+            }
+
+            ApplyMiniCurrencyCalculatorVisualSettings();
         }
 
         private Color GetMiniCurrencyInactiveCardBackgroundColor()
@@ -563,6 +629,117 @@ namespace Notepads.Views.MainPage
             var darkContrast = GetMiniCurrencyContrastRatio(backgroundColor, MiniCurrencyAdaptiveTextDarkColor);
             var lightContrast = GetMiniCurrencyContrastRatio(backgroundColor, MiniCurrencyAdaptiveTextLightColor);
             return lightContrast >= darkContrast ? MiniCurrencyAdaptiveTextLightColor : MiniCurrencyAdaptiveTextDarkColor;
+        }
+
+        private void ApplyMiniCurrencyCalculatorVisualSettings()
+        {
+            if (MiniCurrencyCalculatorHost == null)
+            {
+                return;
+            }
+
+            var digitBackground = GetMiniCurrencyCalculatorDigitButtonsBackgroundColor();
+            var operatorBackground = GetMiniCurrencyCalculatorOperatorButtonsBackgroundColor();
+            var equalsBackground = GetMiniCurrencyCalculatorEqualsButtonBackgroundColor();
+            var digitBackgroundBrush = new SolidColorBrush(digitBackground);
+            var operatorBackgroundBrush = new SolidColorBrush(operatorBackground);
+            var equalsBackgroundBrush = new SolidColorBrush(equalsBackground);
+            var effectiveDigitBackground = GetMiniCurrencyEffectiveCardColor(digitBackground);
+            var effectiveOperatorBackground = GetMiniCurrencyEffectiveCardColor(operatorBackground);
+            var effectiveEqualsBackground = GetMiniCurrencyEffectiveCardColor(equalsBackground);
+            var digitTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveDigitBackground));
+            var operatorTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveOperatorBackground));
+            var equalsTextBrush = new SolidColorBrush(GetMiniCurrencyAdaptiveTextColor(effectiveEqualsBackground));
+
+            foreach (var button in GetMiniCurrencyCalculatorDigitButtons())
+            {
+                if (button != null)
+                {
+                    button.Background = digitBackgroundBrush;
+                    button.Foreground = digitTextBrush;
+                }
+            }
+
+            foreach (var button in GetMiniCurrencyCalculatorOperatorButtons())
+            {
+                if (button != null)
+                {
+                    button.Background = operatorBackgroundBrush;
+                    button.Foreground = operatorTextBrush;
+                }
+            }
+
+            if (MiniCurrencyCalcEqualsButton != null)
+            {
+                MiniCurrencyCalcEqualsButton.Background = equalsBackgroundBrush;
+                MiniCurrencyCalcEqualsButton.Foreground = equalsTextBrush;
+            }
+        }
+
+        private Color GetMiniCurrencyCalculatorDigitButtonsBackgroundColor()
+        {
+            var alpha = GetMiniCurrencyCalculatorButtonsAlpha();
+            var baseColor = AppSettingsService.MiniCurrencyCalculatorDigitTextColor;
+            return Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B);
+        }
+
+        private Color GetMiniCurrencyCalculatorOperatorButtonsBackgroundColor()
+        {
+            var alpha = GetMiniCurrencyCalculatorButtonsAlpha();
+            var baseColor = AppSettingsService.MiniCurrencyCalculatorOperationTextColor;
+            return Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B);
+        }
+
+        private Color GetMiniCurrencyCalculatorEqualsButtonBackgroundColor()
+        {
+            var baseColor = AppSettingsService.MiniCurrencyCalculatorUseWindowsEqualsColor
+                ? ThemeSettingsService.AppAccentColor
+                : AppSettingsService.MiniCurrencyCalculatorEqualsColor;
+            return Color.FromArgb(GetMiniCurrencyCalculatorEqualsButtonAlpha(), baseColor.R, baseColor.G, baseColor.B);
+        }
+
+        private static byte GetMiniCurrencyCalculatorButtonsAlpha()
+        {
+            var percent = Math.Max(0, Math.Min(100, AppSettingsService.MiniCurrencyCalculatorButtonsOpacityPercent));
+            return (byte)Math.Round(255 * (percent / 100.0));
+        }
+
+        private static byte GetMiniCurrencyCalculatorEqualsButtonAlpha()
+        {
+            var percent = Math.Max(0, Math.Min(100, AppSettingsService.MiniCurrencyCalculatorEqualsButtonOpacityPercent));
+            return (byte)Math.Round(255 * (percent / 100.0));
+        }
+
+        private IEnumerable<Button> GetMiniCurrencyCalculatorDigitButtons()
+        {
+            return new[]
+            {
+                MiniCurrencyCalcDigit0Button,
+                MiniCurrencyCalcDigit1Button,
+                MiniCurrencyCalcDigit2Button,
+                MiniCurrencyCalcDigit3Button,
+                MiniCurrencyCalcDigit4Button,
+                MiniCurrencyCalcDigit5Button,
+                MiniCurrencyCalcDigit6Button,
+                MiniCurrencyCalcDigit7Button,
+                MiniCurrencyCalcDigit8Button,
+                MiniCurrencyCalcDigit9Button,
+                MiniCurrencyCalcCommaButton
+            };
+        }
+
+        private IEnumerable<Button> GetMiniCurrencyCalculatorOperatorButtons()
+        {
+            return new[]
+            {
+                MiniCurrencyCalcBackspaceButton,
+                MiniCurrencyCalcAcButton,
+                MiniCurrencyCalcPercentButton,
+                MiniCurrencyCalcDivideButton,
+                MiniCurrencyCalcMultiplyButton,
+                MiniCurrencyCalcMinusButton,
+                MiniCurrencyCalcPlusButton
+            };
         }
 
         private Color GetMiniCurrencyEffectiveCardColor(Color cardColor)
@@ -976,6 +1153,8 @@ namespace Notepads.Views.MainPage
                 button.CornerRadius = cornerRadius;
                 button.FontSize = buttonFontSize;
             }
+
+            ApplyMiniCurrencyCalculatorVisualSettings();
 
             UpdateMiniCurrencyCalculatorRowWidths();
         }

@@ -50,6 +50,15 @@ namespace Notepads.Views.Settings
             MiniCurrencyUseDefaultInactiveCardColorToggle.IsOn = AppSettingsService.MiniCurrencyUseDefaultInactiveCardColor;
             MiniCurrencyInactiveCardColorPicker.IsEnabled = !AppSettingsService.MiniCurrencyUseDefaultInactiveCardColor;
             MiniCurrencyInactiveCardColorPicker.Color = AppSettingsService.MiniCurrencyInactiveCardColor;
+            MiniCurrencyCalculatorUseWindowsEqualsColorToggle.IsOn = AppSettingsService.MiniCurrencyCalculatorUseWindowsEqualsColor;
+            MiniCurrencyCalculatorEqualsButtonColorPicker.IsEnabled = !AppSettingsService.MiniCurrencyCalculatorUseWindowsEqualsColor;
+            MiniCurrencyCalculatorEqualsButtonColorPicker.Color = AppSettingsService.MiniCurrencyCalculatorUseWindowsEqualsColor
+                ? ThemeSettingsService.AppAccentColor
+                : AppSettingsService.MiniCurrencyCalculatorEqualsColor;
+            MiniCurrencyCalculatorEqualsButtonOpacitySlider.Value = AppSettingsService.MiniCurrencyCalculatorEqualsButtonOpacityPercent;
+            MiniCurrencyCalculatorDigitTextColorPicker.Color = AppSettingsService.MiniCurrencyCalculatorDigitTextColor;
+            MiniCurrencyCalculatorOperatorTextColorPicker.Color = AppSettingsService.MiniCurrencyCalculatorOperationTextColor;
+            MiniCurrencyCalculatorButtonsOpacitySlider.Value = AppSettingsService.MiniCurrencyCalculatorButtonsOpacityPercent;
             AccentColorPicker.Color = ThemeSettingsService.AppAccentColor;
 
             if (App.IsGameBarWidget)
@@ -76,6 +85,13 @@ namespace Notepads.Views.Settings
                 AccentColorPicker.ColorChanged -= AccentColorPicker_OnColorChanged;
                 AccentColorPicker.Color = color;
                 AccentColorPicker.ColorChanged += AccentColorPicker_OnColorChanged;
+
+                if (MiniCurrencyCalculatorUseWindowsEqualsColorToggle.IsOn)
+                {
+                    MiniCurrencyCalculatorEqualsButtonColorPicker.ColorChanged -= MiniCurrencyCalculatorEqualsButtonColorPicker_OnColorChanged;
+                    MiniCurrencyCalculatorEqualsButtonColorPicker.Color = color;
+                    MiniCurrencyCalculatorEqualsButtonColorPicker.ColorChanged += MiniCurrencyCalculatorEqualsButtonColorPicker_OnColorChanged;
+                }
             });
         }
 
@@ -91,6 +107,12 @@ namespace Notepads.Views.Settings
             MiniCurrencyValueFontWeightSlider.ValueChanged += MiniCurrencyValueFontWeightSlider_OnValueChanged;
             MiniCurrencyUseDefaultInactiveCardColorToggle.Toggled += MiniCurrencyUseDefaultInactiveCardColorToggle_OnToggled;
             MiniCurrencyInactiveCardColorPicker.ColorChanged += MiniCurrencyInactiveCardColorPicker_OnColorChanged;
+            MiniCurrencyCalculatorUseWindowsEqualsColorToggle.Toggled += MiniCurrencyCalculatorUseWindowsEqualsColorToggle_OnToggled;
+            MiniCurrencyCalculatorEqualsButtonColorPicker.ColorChanged += MiniCurrencyCalculatorEqualsButtonColorPicker_OnColorChanged;
+            MiniCurrencyCalculatorEqualsButtonOpacitySlider.ValueChanged += MiniCurrencyCalculatorEqualsButtonOpacitySlider_OnValueChanged;
+            MiniCurrencyCalculatorDigitTextColorPicker.ColorChanged += MiniCurrencyCalculatorDigitTextColorPicker_OnColorChanged;
+            MiniCurrencyCalculatorOperatorTextColorPicker.ColorChanged += MiniCurrencyCalculatorOperatorTextColorPicker_OnColorChanged;
+            MiniCurrencyCalculatorButtonsOpacitySlider.ValueChanged += MiniCurrencyCalculatorButtonsOpacitySlider_OnValueChanged;
             AccentColorToggle.Toggled += WindowsAccentColorToggle_OnToggled;
             AccentColorPicker.ColorChanged += AccentColorPicker_OnColorChanged;
             ThemeSettingsService.OnAccentColorChanged += ThemeSettingsService_OnAccentColorChanged;
@@ -113,6 +135,12 @@ namespace Notepads.Views.Settings
             MiniCurrencyValueFontWeightSlider.ValueChanged -= MiniCurrencyValueFontWeightSlider_OnValueChanged;
             MiniCurrencyUseDefaultInactiveCardColorToggle.Toggled -= MiniCurrencyUseDefaultInactiveCardColorToggle_OnToggled;
             MiniCurrencyInactiveCardColorPicker.ColorChanged -= MiniCurrencyInactiveCardColorPicker_OnColorChanged;
+            MiniCurrencyCalculatorUseWindowsEqualsColorToggle.Toggled -= MiniCurrencyCalculatorUseWindowsEqualsColorToggle_OnToggled;
+            MiniCurrencyCalculatorEqualsButtonColorPicker.ColorChanged -= MiniCurrencyCalculatorEqualsButtonColorPicker_OnColorChanged;
+            MiniCurrencyCalculatorEqualsButtonOpacitySlider.ValueChanged -= MiniCurrencyCalculatorEqualsButtonOpacitySlider_OnValueChanged;
+            MiniCurrencyCalculatorDigitTextColorPicker.ColorChanged -= MiniCurrencyCalculatorDigitTextColorPicker_OnColorChanged;
+            MiniCurrencyCalculatorOperatorTextColorPicker.ColorChanged -= MiniCurrencyCalculatorOperatorTextColorPicker_OnColorChanged;
+            MiniCurrencyCalculatorButtonsOpacitySlider.ValueChanged -= MiniCurrencyCalculatorButtonsOpacitySlider_OnValueChanged;
             AccentColorToggle.Toggled -= WindowsAccentColorToggle_OnToggled;
             AccentColorPicker.ColorChanged -= AccentColorPicker_OnColorChanged;
             ThemeSettingsService.OnAccentColorChanged -= ThemeSettingsService_OnAccentColorChanged;
@@ -211,6 +239,49 @@ namespace Notepads.Views.Settings
             {
                 AppSettingsService.MiniCurrencyInactiveCardColor = args.NewColor;
             }
+        }
+
+        private void MiniCurrencyCalculatorUseWindowsEqualsColorToggle_OnToggled(object sender, RoutedEventArgs e)
+        {
+            var useWindowsColor = MiniCurrencyCalculatorUseWindowsEqualsColorToggle.IsOn;
+            MiniCurrencyCalculatorEqualsButtonColorPicker.IsEnabled = !useWindowsColor;
+            AppSettingsService.MiniCurrencyCalculatorUseWindowsEqualsColor = useWindowsColor;
+            if (useWindowsColor)
+            {
+                MiniCurrencyCalculatorEqualsButtonColorPicker.Color = ThemeSettingsService.AppAccentColor;
+            }
+            else
+            {
+                MiniCurrencyCalculatorEqualsButtonColorPicker.Color = AppSettingsService.MiniCurrencyCalculatorEqualsColor;
+            }
+        }
+
+        private void MiniCurrencyCalculatorEqualsButtonColorPicker_OnColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+        {
+            if (MiniCurrencyCalculatorEqualsButtonColorPicker.IsEnabled)
+            {
+                AppSettingsService.MiniCurrencyCalculatorEqualsColor = args.NewColor;
+            }
+        }
+
+        private void MiniCurrencyCalculatorEqualsButtonOpacitySlider_OnValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            AppSettingsService.MiniCurrencyCalculatorEqualsButtonOpacityPercent = (int)System.Math.Round(e.NewValue);
+        }
+
+        private void MiniCurrencyCalculatorDigitTextColorPicker_OnColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+        {
+            AppSettingsService.MiniCurrencyCalculatorDigitTextColor = args.NewColor;
+        }
+
+        private void MiniCurrencyCalculatorOperatorTextColorPicker_OnColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+        {
+            AppSettingsService.MiniCurrencyCalculatorOperationTextColor = args.NewColor;
+        }
+
+        private void MiniCurrencyCalculatorButtonsOpacitySlider_OnValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            AppSettingsService.MiniCurrencyCalculatorButtonsOpacityPercent = (int)System.Math.Round(e.NewValue);
         }
 
         private void WindowsAccentColorToggle_OnToggled(object sender, RoutedEventArgs e)

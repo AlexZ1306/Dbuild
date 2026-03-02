@@ -24,6 +24,12 @@ namespace Notepads.Settings
         internal static string MiniCurrencyValueFontWeightInt = "MiniCurrencyValueFontWeightInt";
         internal static string MiniCurrencyUseDefaultInactiveCardColorBool = "MiniCurrencyUseDefaultInactiveCardColorBool";
         internal static string MiniCurrencyInactiveCardColorArgbUInt = "MiniCurrencyInactiveCardColorArgbUInt";
+        internal static string MiniCurrencyCalculatorUseWindowsEqualsColorBool = "MiniCurrencyCalculatorUseWindowsEqualsColorBool";
+        internal static string MiniCurrencyCalculatorEqualsColorArgbUInt = "MiniCurrencyCalculatorEqualsColorArgbUInt";
+        internal static string MiniCurrencyCalculatorEqualsButtonOpacityPercentInt = "MiniCurrencyCalculatorEqualsButtonOpacityPercentInt";
+        internal static string MiniCurrencyCalculatorDigitTextColorArgbUInt = "MiniCurrencyCalculatorDigitTextColorArgbUInt";
+        internal static string MiniCurrencyCalculatorOperationTextColorArgbUInt = "MiniCurrencyCalculatorOperationTextColorArgbUInt";
+        internal static string MiniCurrencyCalculatorButtonsOpacityPercentInt = "MiniCurrencyCalculatorButtonsOpacityPercentInt";
         internal static string AppAccentColorHexStr = "AppAccentColorHexStr";
         internal static string CustomAccentColorHexStr = "CustomAccentColorHexStr";
         internal static string UseWindowsAccentColorBool = "UseWindowsAccentColorBool";

@@ -32,6 +32,12 @@ namespace Notepads.Services
         public static event EventHandler<int> OnMiniCurrencyValueFontWeightChanged;
         public static event EventHandler<bool> OnMiniCurrencyUseDefaultInactiveCardColorChanged;
         public static event EventHandler<Color> OnMiniCurrencyInactiveCardColorChanged;
+        public static event EventHandler<bool> OnMiniCurrencyCalculatorUseWindowsEqualsColorChanged;
+        public static event EventHandler<Color> OnMiniCurrencyCalculatorEqualsColorChanged;
+        public static event EventHandler<int> OnMiniCurrencyCalculatorEqualsButtonOpacityPercentChanged;
+        public static event EventHandler<Color> OnMiniCurrencyCalculatorDigitTextColorChanged;
+        public static event EventHandler<Color> OnMiniCurrencyCalculatorOperationTextColorChanged;
+        public static event EventHandler<int> OnMiniCurrencyCalculatorButtonsOpacityPercentChanged;
         public static event EventHandler<bool> OnSessionBackupAndRestoreOptionChanged;
         public static event EventHandler<bool> OnHighlightMisspelledWordsChanged;
 
@@ -228,6 +234,12 @@ namespace Notepads.Services
         private static int _miniCurrencyValueFontWeight = 400;
         private static bool _miniCurrencyUseDefaultInactiveCardColor = true;
         private static Color _miniCurrencyInactiveCardColor = Color.FromArgb(255, 58, 58, 58);
+        private static bool _miniCurrencyCalculatorUseWindowsEqualsColor = true;
+        private static Color _miniCurrencyCalculatorEqualsColor = Color.FromArgb(255, 28, 156, 203);
+        private static int _miniCurrencyCalculatorEqualsButtonOpacityPercent = 100;
+        private static Color _miniCurrencyCalculatorDigitTextColor = Color.FromArgb(255, 58, 58, 58);
+        private static Color _miniCurrencyCalculatorOperationTextColor = Color.FromArgb(255, 58, 58, 58);
+        private static int _miniCurrencyCalculatorButtonsOpacityPercent = 100;
 
         public static bool ShowStatusBar
         {
@@ -313,6 +325,77 @@ namespace Notepads.Services
                 _miniCurrencyInactiveCardColor = value;
                 OnMiniCurrencyInactiveCardColorChanged?.Invoke(null, value);
                 ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyInactiveCardColorArgbUInt, PackColor(value));
+            }
+        }
+
+        public static bool MiniCurrencyCalculatorUseWindowsEqualsColor
+        {
+            get => _miniCurrencyCalculatorUseWindowsEqualsColor;
+            set
+            {
+                if (_miniCurrencyCalculatorUseWindowsEqualsColor == value) return;
+                _miniCurrencyCalculatorUseWindowsEqualsColor = value;
+                OnMiniCurrencyCalculatorUseWindowsEqualsColorChanged?.Invoke(null, value);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyCalculatorUseWindowsEqualsColorBool, value);
+            }
+        }
+
+        public static Color MiniCurrencyCalculatorEqualsColor
+        {
+            get => _miniCurrencyCalculatorEqualsColor;
+            set
+            {
+                _miniCurrencyCalculatorEqualsColor = value;
+                OnMiniCurrencyCalculatorEqualsColorChanged?.Invoke(null, value);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyCalculatorEqualsColorArgbUInt, PackColor(value));
+            }
+        }
+
+        public static int MiniCurrencyCalculatorEqualsButtonOpacityPercent
+        {
+            get => _miniCurrencyCalculatorEqualsButtonOpacityPercent;
+            set
+            {
+                var normalized = Math.Max(0, Math.Min(100, value));
+                if (_miniCurrencyCalculatorEqualsButtonOpacityPercent == normalized) return;
+                _miniCurrencyCalculatorEqualsButtonOpacityPercent = normalized;
+                OnMiniCurrencyCalculatorEqualsButtonOpacityPercentChanged?.Invoke(null, normalized);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyCalculatorEqualsButtonOpacityPercentInt, normalized);
+            }
+        }
+
+        public static Color MiniCurrencyCalculatorDigitTextColor
+        {
+            get => _miniCurrencyCalculatorDigitTextColor;
+            set
+            {
+                _miniCurrencyCalculatorDigitTextColor = value;
+                OnMiniCurrencyCalculatorDigitTextColorChanged?.Invoke(null, value);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyCalculatorDigitTextColorArgbUInt, PackColor(value));
+            }
+        }
+
+        public static Color MiniCurrencyCalculatorOperationTextColor
+        {
+            get => _miniCurrencyCalculatorOperationTextColor;
+            set
+            {
+                _miniCurrencyCalculatorOperationTextColor = value;
+                OnMiniCurrencyCalculatorOperationTextColorChanged?.Invoke(null, value);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyCalculatorOperationTextColorArgbUInt, PackColor(value));
+            }
+        }
+
+        public static int MiniCurrencyCalculatorButtonsOpacityPercent
+        {
+            get => _miniCurrencyCalculatorButtonsOpacityPercent;
+            set
+            {
+                var normalized = Math.Max(0, Math.Min(100, value));
+                if (_miniCurrencyCalculatorButtonsOpacityPercent == normalized) return;
+                _miniCurrencyCalculatorButtonsOpacityPercent = normalized;
+                OnMiniCurrencyCalculatorButtonsOpacityPercentChanged?.Invoke(null, normalized);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyCalculatorButtonsOpacityPercentInt, normalized);
             }
         }
 
@@ -499,6 +582,72 @@ namespace Notepads.Services
             else
             {
                 _miniCurrencyInactiveCardColor = Color.FromArgb(255, 58, 58, 58);
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorUseWindowsEqualsColorBool) is bool useWindowsEqualsColor)
+            {
+                _miniCurrencyCalculatorUseWindowsEqualsColor = useWindowsEqualsColor;
+            }
+            else
+            {
+                _miniCurrencyCalculatorUseWindowsEqualsColor = true;
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorEqualsColorArgbUInt) is uint equalsColorArgb)
+            {
+                _miniCurrencyCalculatorEqualsColor = UnpackColor(equalsColorArgb);
+            }
+            else if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorEqualsColorArgbUInt) is int equalsColorArgbInt)
+            {
+                _miniCurrencyCalculatorEqualsColor = UnpackColor(unchecked((uint)equalsColorArgbInt));
+            }
+            else
+            {
+                _miniCurrencyCalculatorEqualsColor = ThemeSettingsService.AppAccentColor;
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorEqualsButtonOpacityPercentInt) is int equalsOpacityPercent)
+            {
+                _miniCurrencyCalculatorEqualsButtonOpacityPercent = Math.Max(0, Math.Min(100, equalsOpacityPercent));
+            }
+            else
+            {
+                _miniCurrencyCalculatorEqualsButtonOpacityPercent = 100;
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorDigitTextColorArgbUInt) is uint digitTextColorArgb)
+            {
+                _miniCurrencyCalculatorDigitTextColor = UnpackColor(digitTextColorArgb);
+            }
+            else if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorDigitTextColorArgbUInt) is int digitTextColorArgbInt)
+            {
+                _miniCurrencyCalculatorDigitTextColor = UnpackColor(unchecked((uint)digitTextColorArgbInt));
+            }
+            else
+            {
+                _miniCurrencyCalculatorDigitTextColor = Color.FromArgb(255, 58, 58, 58);
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorOperationTextColorArgbUInt) is uint operationTextColorArgb)
+            {
+                _miniCurrencyCalculatorOperationTextColor = UnpackColor(operationTextColorArgb);
+            }
+            else if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorOperationTextColorArgbUInt) is int operationTextColorArgbInt)
+            {
+                _miniCurrencyCalculatorOperationTextColor = UnpackColor(unchecked((uint)operationTextColorArgbInt));
+            }
+            else
+            {
+                _miniCurrencyCalculatorOperationTextColor = Color.FromArgb(255, 58, 58, 58);
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyCalculatorButtonsOpacityPercentInt) is int buttonsOpacityPercent)
+            {
+                _miniCurrencyCalculatorButtonsOpacityPercent = Math.Max(0, Math.Min(100, buttonsOpacityPercent));
+            }
+            else
+            {
+                _miniCurrencyCalculatorButtonsOpacityPercent = 100;
             }
         }
 
