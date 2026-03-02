@@ -92,6 +92,7 @@ namespace Notepads.Views.MainPage
         private double _miniCurrencyDragLastPointerYInViewport;
         private bool _miniCurrencyDragHasLastPointerYInViewport;
         private DateTimeOffset _miniCurrencyIgnoreRowTapUntilUtc = DateTimeOffset.MinValue;
+        private DateTimeOffset _miniCurrencySuppressBackDeleteUntilUtc = DateTimeOffset.MinValue;
         private string _miniCurrencyActiveCode = "KZT";
         private string _miniCurrencyLatestStatusText = "Загрузка курсов...";
         private double _miniCurrencyWindowWidthBeforePaneOpen = -1;

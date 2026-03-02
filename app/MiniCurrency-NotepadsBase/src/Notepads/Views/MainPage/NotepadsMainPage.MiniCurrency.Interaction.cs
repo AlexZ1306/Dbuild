@@ -656,7 +656,7 @@ namespace Notepads.Views.MainPage
 
         private bool TryGetMiniCurrencyCalculatorActiveTextBox(out TextBox textBox)
         {
-            if (_miniCurrencyInputs.TryGetValue(_miniCurrencyActiveCode, out textBox) && IsMiniCurrencyVisible(_miniCurrencyActiveCode))
+            if (_miniCurrencyInputs.TryGetValue(_miniCurrencyActiveCode, out textBox))
             {
                 return true;
             }
@@ -670,12 +670,23 @@ namespace Notepads.Views.MainPage
                         continue;
                     }
 
-                    if (!IsMiniCurrencyVisible(code) || !_miniCurrencyInputs.TryGetValue(code, out textBox))
+                    if (!_miniCurrencyInputs.TryGetValue(code, out textBox))
                     {
                         continue;
                     }
 
                     ActivateMiniCurrencyInput(code);
+                    return true;
+                }
+            }
+
+            if (_miniCurrencyInputs.Count > 0)
+            {
+                var fallbackPair = _miniCurrencyInputs.FirstOrDefault(x => x.Value != null);
+                if (fallbackPair.Value != null)
+                {
+                    _miniCurrencyActiveCode = fallbackPair.Key;
+                    textBox = fallbackPair.Value;
                     return true;
                 }
             }
@@ -717,6 +728,7 @@ namespace Notepads.Views.MainPage
 
             if (ch == '=')
             {
+                MarkMiniCurrencyEqualsKeyboardInput();
                 TriggerMiniCurrencyCalculatorKeyboardPressVisual("=");
                 EvaluateMiniCurrencyExpression(textBox);
                 args.Handled = true;
@@ -793,6 +805,7 @@ namespace Notepads.Views.MainPage
                 case VirtualKey.Enter:
                     if (TryGetMiniCurrencyCalculatorActiveTextBox(out var activeTextBox))
                     {
+                        MarkMiniCurrencyEqualsKeyboardInput();
                         TriggerMiniCurrencyCalculatorKeyboardPressVisual("=");
                         EvaluateMiniCurrencyExpression(activeTextBox);
                         args.Handled = true;
@@ -801,25 +814,74 @@ namespace Notepads.Views.MainPage
                     return;
             }
 
-            if (!TryGetMiniCurrencyCalculatorActiveTextBox(out var textBox))
+            if (args.VirtualKey != VirtualKey.Back && args.VirtualKey != VirtualKey.Delete)
+            {
+                return;
+            }
+
+            if (!TryGetMiniCurrencyCalculatorActiveTextBox(out _))
             {
                 return;
             }
 
             if (args.VirtualKey == VirtualKey.Back)
             {
-                TriggerMiniCurrencyCalculatorKeyboardPressVisual("Backspace");
-                ApplyMiniCurrencyCalculatorBackspace(textBox);
                 args.Handled = true;
+                _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    if (ShouldSuppressMiniCurrencyBackDeleteFromEquals())
+                    {
+                        return;
+                    }
+
+                    if (!TryGetMiniCurrencyCalculatorActiveTextBox(out var delayedTextBox))
+                    {
+                        return;
+                    }
+
+                    TriggerMiniCurrencyCalculatorKeyboardPressVisual("Backspace");
+                    ApplyMiniCurrencyCalculatorBackspace(delayedTextBox);
+                });
                 return;
             }
 
             if (args.VirtualKey == VirtualKey.Delete)
             {
-                TriggerMiniCurrencyCalculatorKeyboardPressVisual("AC");
-                ApplyMiniCurrencyCalculatorClear(textBox);
                 args.Handled = true;
+                _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    if (ShouldSuppressMiniCurrencyBackDeleteFromEquals())
+                    {
+                        return;
+                    }
+
+                    if (!TryGetMiniCurrencyCalculatorActiveTextBox(out var delayedTextBox))
+                    {
+                        return;
+                    }
+
+                    TriggerMiniCurrencyCalculatorKeyboardPressVisual("AC");
+                    ApplyMiniCurrencyCalculatorClear(delayedTextBox);
+                });
             }
+        }
+
+        private void MarkMiniCurrencyEqualsKeyboardInput()
+        {
+            // Some keyboard layouts/devices emit a spurious Back/Delete right after '='.
+            // Keep a slightly wider suppression window to swallow only that immediate extra event.
+            _miniCurrencySuppressBackDeleteUntilUtc = DateTimeOffset.UtcNow.AddMilliseconds(220);
+        }
+
+        private bool ShouldSuppressMiniCurrencyBackDeleteFromEquals()
+        {
+            if (DateTimeOffset.UtcNow > _miniCurrencySuppressBackDeleteUntilUtc)
+            {
+                return false;
+            }
+
+            _miniCurrencySuppressBackDeleteUntilUtc = DateTimeOffset.MinValue;
+            return true;
         }
 
         private async void TriggerMiniCurrencyCalculatorKeyboardPressVisual(string token)
@@ -952,35 +1014,27 @@ namespace Notepads.Views.MainPage
             }
 
             var current = (textBox.Text ?? string.Empty).Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
-            if (_miniCurrencyReplaceOnNextInput)
+            if (string.IsNullOrWhiteSpace(current) || current == "0")
             {
-                ApplyMiniCurrencyCalculatorClear(textBox);
-                return;
-            }
-
-            if (current.Length > 0)
-            {
-                textBox.Text = current.Substring(0, current.Length - 1);
+                textBox.Text = "0";
+                _miniCurrencyReplaceOnNextInput = true;
             }
             else
             {
-                textBox.Text = "0";
+                var trimmed = current.Substring(0, Math.Max(0, current.Length - 1));
+                if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "-" || trimmed == "," || trimmed == "-,")
+                {
+                    trimmed = "0";
+                }
+
+                textBox.Text = trimmed;
+                _miniCurrencyReplaceOnNextInput = string.Equals(trimmed, "0", StringComparison.Ordinal);
             }
 
             if (string.IsNullOrWhiteSpace(textBox.Text))
             {
                 textBox.Text = "0";
                 _miniCurrencyReplaceOnNextInput = true;
-                ResetMiniCurrencyDeferredExpression();
-            }
-
-            if (IsMiniCurrencyExpressionText(textBox.Text))
-            {
-                SetMiniCurrencyStatus(textBox.Text ?? string.Empty);
-            }
-            else
-            {
-                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
             }
 
             if (!IsMiniCurrencyExpressionText(textBox.Text))
@@ -988,6 +1042,21 @@ namespace Notepads.Views.MainPage
                 textBox.Text = FormatMiniCurrencyLiveInputText(textBox.Text);
             }
 
+            ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+
+            if (_miniCurrencyDeferredExpressionActive)
+            {
+                var operand = (textBox.Text ?? "0").Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
+                SetMiniCurrencyStatus(_miniCurrencyDeferredExpressionPrefix + operand);
+            }
+            else if (IsMiniCurrencyExpressionText(textBox.Text))
+            {
+                SetMiniCurrencyStatus(textBox.Text ?? string.Empty);
+            }
+
+            // In calculator-only mode value is rendered via standalone header, so force refresh
+            // after each backspace instead of relying only on TextChanged from hidden row TextBox.
+            UpdateMiniCurrencyCalculatorStandaloneHeaderText();
             SaveMiniCurrencyValues();
         }
 
@@ -1005,6 +1074,7 @@ namespace Notepads.Views.MainPage
 
             _miniCurrencyActiveCode = code;
             HighlightMiniCurrencyActiveRow(code);
+            UpdateMiniCurrencyCalculatorStandaloneHeaderText();
 
             if (IsMiniCurrencyExpressionText(textBox.Text))
             {
@@ -1025,6 +1095,80 @@ namespace Notepads.Views.MainPage
             var compactCurrentDisplay = (textBox.Text ?? string.Empty)
                 .Replace(" ", string.Empty)
                 .Replace("\u00A0", string.Empty);
+
+            if (token == '%')
+            {
+                // Keep '%' behavior consistent with hidden operators:
+                // don't render symbol in active amount field, show it only in history/status.
+                var operandSource = compactCurrentDisplay;
+                if (_miniCurrencyDeferredExpressionActive && _miniCurrencyReplaceOnNextInput)
+                {
+                    operandSource = "0";
+                }
+                else if (_miniCurrencyReplaceOnNextInput)
+                {
+                    operandSource = SeedMiniCurrencyExpressionFromText(textBox.Text);
+                }
+
+                if (string.IsNullOrWhiteSpace(operandSource))
+                {
+                    operandSource = "0";
+                }
+
+                if (!double.TryParse(
+                    operandSource.Replace(",", "."),
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var operandValue))
+                {
+                    operandValue = 0;
+                }
+
+                var percentValue = operandValue / 100d;
+                if (_miniCurrencyDeferredExpressionActive &&
+                    !string.IsNullOrWhiteSpace(_miniCurrencyDeferredExpressionPrefix))
+                {
+                    var prefix = _miniCurrencyDeferredExpressionPrefix;
+                    var op = prefix[prefix.Length - 1];
+                    if (IsMiniCurrencyBinaryOperatorToken(op))
+                    {
+                        var leftOperandSource = prefix.Substring(0, prefix.Length - 1);
+                        if (!double.TryParse(
+                            leftOperandSource.Replace(",", "."),
+                            NumberStyles.Float,
+                            CultureInfo.InvariantCulture,
+                            out var leftOperandValue))
+                        {
+                            leftOperandValue = 0;
+                        }
+
+                        // Canonical calculator percent behavior:
+                        // a +/- b% => a +/- (a * b / 100)
+                        // a */ b%  => a */ (b / 100)
+                        if (op == '+' || op == '-')
+                        {
+                            percentValue = leftOperandValue * operandValue / 100d;
+                        }
+                    }
+                }
+
+                textBox.Text = FormatMiniCurrencyNumber(percentValue);
+                _miniCurrencyReplaceOnNextInput = false;
+
+                if (_miniCurrencyDeferredExpressionActive)
+                {
+                    SetMiniCurrencyStatus(_miniCurrencyDeferredExpressionPrefix + operandSource + "%");
+                }
+                else
+                {
+                    SetMiniCurrencyStatus(operandSource + "%");
+                }
+
+                ConvertFromMiniCurrency(_miniCurrencyActiveCode);
+                SaveMiniCurrencyValues();
+                UpdateMiniCurrencyCalculatorStandaloneHeaderText();
+                return;
+            }
 
             // Canonical calculator behavior:
             // + - * / are not shown inside the active input, only in status/history line.
@@ -1102,6 +1246,7 @@ namespace Notepads.Views.MainPage
             }
 
             SaveMiniCurrencyValues();
+            UpdateMiniCurrencyCalculatorStandaloneHeaderText();
         }
 
         private void EvaluateMiniCurrencyExpression(TextBox textBox)
