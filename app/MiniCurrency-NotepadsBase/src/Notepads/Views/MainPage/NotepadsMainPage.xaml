@@ -558,10 +558,42 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <Button x:Name="MiniCurrencyCalcBackspaceButton" Grid.Column="0" Tag="Backspace" Content="⌫" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcBackspaceButton" Grid.Column="0" Tag="Backspace" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click">
+                                                <Viewbox x:Name="MiniCurrencyCalcBackspaceIconGrid" Width="23" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Grid Width="23" Height="17">
+                                                        <Path Data="M12.1055 11.7882C11.6955 12.1982 11.03 12.1957 10.6231 11.7826C10.2216 11.375 10.2228 10.7202 10.6259 10.3141L12.8689 8.05434L10.6232 5.77512C10.222 5.36801 10.2245 4.71353 10.6286 4.3094C11.0338 3.9042 11.6904 3.90299 12.0971 4.30669L14.3763 6.56912L16.672 4.25667C17.0809 3.84474 17.7467 3.84353 18.1572 4.25397C18.5666 4.66336 18.5666 5.32711 18.1572 5.73649L15.8393 8.05434L18.099 10.2974C18.5147 10.71 18.5134 11.3826 18.0962 11.7937C17.6823 12.2015 17.0161 12.1966 16.6082 11.7827L14.3763 9.5174L12.1055 11.7882Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcBackspaceButton}"/>
+                                                        <Path Data="M6.60031 1.39719C6.97549 1.02129 7.48477 0.810059 8.01587 0.810059H19.5863C20.6909 0.810059 21.5863 1.70549 21.5863 2.81006V13.2101C21.5863 14.3146 20.6909 15.2101 19.5863 15.2101H8.01587C7.48477 15.2101 6.97549 14.9988 6.60031 14.6229L1.41019 9.42293C0.630929 8.64219 0.630928 7.37793 1.41019 6.59719L6.60031 1.39719Z"
+                                                              Stroke="{Binding Foreground, ElementName=MiniCurrencyCalcBackspaceButton}"
+                                                              StrokeThickness="1.62"/>
+                                                    </Grid>
+                                                </Viewbox>
+                                            </Button>
                                             <Button x:Name="MiniCurrencyCalcAcButton" Grid.Column="2" Tag="AC" Content="AC" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
-                                            <Button x:Name="MiniCurrencyCalcPercentButton" Grid.Column="4" Tag="%" Content="%" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
-                                            <Button x:Name="MiniCurrencyCalcDivideButton" Grid.Column="6" Tag="/" Content="÷" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcPercentButton" Grid.Column="4" Tag="%" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click">
+                                                <Viewbox x:Name="MiniCurrencyCalcPercentIconGrid" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Grid Width="17" Height="17">
+                                                        <Path Data="M15.8086 2.9631C16.3562 2.41559 16.3561 1.52789 15.8086 0.980376C15.2611 0.432862 14.3734 0.432862 13.8259 0.980376L1.00363 13.8027C0.456113 14.3502 0.456113 15.2379 1.00363 15.7854C1.55114 16.3329 2.43884 16.3329 2.98635 15.7854L15.8086 2.9631Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcPercentButton}"/>
+                                                        <Path Data="F0 M15.6924 10.4053C17.1525 11.8653 17.1525 14.2325 15.6924 15.6925C14.2324 17.1526 11.8652 17.1526 10.4052 15.6925C8.94513 14.2325 8.94513 11.8653 10.4052 10.4053C11.8652 8.94521 14.2324 8.94521 15.6924 10.4053ZM14.3706 11.727C15.1006 12.457 15.1006 13.6406 14.3706 14.3706C13.6406 15.1007 12.457 15.1007 11.727 14.3706C10.997 13.6406 10.997 12.457 11.727 11.727C12.457 10.997 13.6406 10.997 14.3706 11.727Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcPercentButton}"/>
+                                                        <Path Data="F0 M6.38229 6.38226C7.84233 4.92222 7.84233 2.55503 6.38229 1.095C4.92226 -0.365043 2.55507 -0.365043 1.09503 1.095C-0.365009 2.55503 -0.36501 4.92222 1.09503 6.38226C2.55507 7.8423 4.92226 7.8423 6.38229 6.38226ZM5.06048 5.06039C5.7905 4.33037 5.7905 3.14678 5.06048 2.41676C4.33046 1.68674 3.14686 1.68674 2.41684 2.41676C1.68683 3.14678 1.68683 4.33037 2.41684 5.06039C3.14686 5.79041 4.33046 5.79041 5.06048 5.06039Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcPercentButton}"/>
+                                                    </Grid>
+                                                </Viewbox>
+                                            </Button>
+                                            <Button x:Name="MiniCurrencyCalcDivideButton" Grid.Column="6" Tag="/" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click">
+                                                <Viewbox x:Name="MiniCurrencyCalcDivideIconGrid" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Grid Width="17" Height="17">
+                                                        <Path Data="M14.9134 10.2868C15.9553 10.2868 16.8 9.44215 16.8 8.4002C16.8 7.35825 15.9553 6.51358 14.9134 6.51358L1.88662 6.51358C0.84467 6.51358 1.44088E-07 7.35824 3.21829E-07 8.4002C4.9957E-07 9.44215 0.844671 10.2868 1.88662 10.2868H14.9134Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcDivideButton}"/>
+                                                        <Path Data="M6.51328 1.88775C6.51328 2.9297 7.35795 3.77549 8.3999 3.77549C9.44185 3.77549 10.2865 2.9297 10.2865 1.88775C10.2865 0.845793 9.44185 0 8.3999 0C7.35795 0 6.51328 0.845793 6.51328 1.88775Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcDivideButton}"/>
+                                                        <Path Data="M6.51328 14.9129C6.51328 13.871 7.35795 13.0252 8.3999 13.0252C9.44185 13.0252 10.2865 13.871 10.2865 14.9129C10.2865 15.9549 9.44185 16.8007 8.3999 16.8007C7.35795 16.8007 6.51328 15.9549 6.51328 14.9129Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcDivideButton}"/>
+                                                    </Grid>
+                                                </Viewbox>
+                                            </Button>
                                         </Grid>
 
                                         <Grid x:Name="MiniCurrencyCalculatorRow2Grid"
@@ -580,7 +612,14 @@
                                             <Button x:Name="MiniCurrencyCalcDigit7Button" Grid.Column="0" Tag="7" Content="7" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
                                             <Button x:Name="MiniCurrencyCalcDigit8Button" Grid.Column="2" Tag="8" Content="8" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
                                             <Button x:Name="MiniCurrencyCalcDigit9Button" Grid.Column="4" Tag="9" Content="9" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
-                                            <Button x:Name="MiniCurrencyCalcMultiplyButton" Grid.Column="6" Tag="*" Content="×" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcMultiplyButton" Grid.Column="6" Tag="*" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click">
+                                                <Viewbox x:Name="MiniCurrencyCalcMultiplyIconGrid" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Grid Width="16" Height="16">
+                                                        <Path Data="M3.32687 14.637C2.56155 15.4023 1.31929 15.3977 0.559744 14.6266C-0.189785 13.8657 -0.187462 12.6434 0.564953 11.8854L4.75186 7.66721L0.559876 3.41265C-0.188896 2.65271 -0.18437 1.43102 0.57001 0.676639C1.32638 -0.0797325 2.552 -0.0819933 3.31116 0.671582L7.56565 4.89479L11.8509 0.578217C12.6143 -0.190719 13.8572 -0.192979 14.6233 0.573175C15.3875 1.33736 15.3875 2.57636 14.6233 3.34055L10.2967 7.66721L14.5148 11.8543C15.2907 12.6245 15.2883 13.88 14.5096 14.6473C13.7369 15.4086 12.4933 15.3994 11.732 14.6267L7.56565 10.3982L3.32687 14.637Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcMultiplyButton}"/>
+                                                    </Grid>
+                                                </Viewbox>
+                                            </Button>
                                         </Grid>
 
                                         <Grid x:Name="MiniCurrencyCalculatorRow3Grid"
@@ -599,7 +638,14 @@
                                             <Button x:Name="MiniCurrencyCalcDigit4Button" Grid.Column="0" Tag="4" Content="4" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
                                             <Button x:Name="MiniCurrencyCalcDigit5Button" Grid.Column="2" Tag="5" Content="5" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
                                             <Button x:Name="MiniCurrencyCalcDigit6Button" Grid.Column="4" Tag="6" Content="6" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
-                                            <Button x:Name="MiniCurrencyCalcMinusButton" Grid.Column="6" Tag="-" Content="−" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcMinusButton" Grid.Column="6" Tag="-" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click">
+                                                <Viewbox x:Name="MiniCurrencyCalcMinusIconGrid" Width="17" Height="4" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Grid Width="17" Height="4">
+                                                        <Path Data="M1.88611 3.77222C0.844441 3.77222 0 2.92778 0 1.88611C0 0.844441 0.84444 0 1.88611 0H14.9139C15.9556 0 16.8 0.844441 16.8 1.88611C16.8 2.92778 15.9556 3.77222 14.9139 3.77222H1.88611Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcMinusButton}"/>
+                                                    </Grid>
+                                                </Viewbox>
+                                            </Button>
                                         </Grid>
 
                                         <Grid x:Name="MiniCurrencyCalculatorRow4Grid"
@@ -618,7 +664,14 @@
                                             <Button x:Name="MiniCurrencyCalcDigit1Button" Grid.Column="0" Tag="1" Content="1" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
                                             <Button x:Name="MiniCurrencyCalcDigit2Button" Grid.Column="2" Tag="2" Content="2" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
                                             <Button x:Name="MiniCurrencyCalcDigit3Button" Grid.Column="4" Tag="3" Content="3" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
-                                            <Button x:Name="MiniCurrencyCalcPlusButton" Grid.Column="6" Tag="+" Content="+" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcPlusButton" Grid.Column="6" Tag="+" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click">
+                                                <Viewbox x:Name="MiniCurrencyCalcPlusIconGrid" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Grid Width="17" Height="17">
+                                                        <Path Data="M8.4 16.6588C7.3669 16.6588 6.52941 15.8213 6.52941 14.7882V10.0588H1.72941C0.774282 10.0588 0 9.28454 0 8.32941C0 7.37429 0.774284 6.6 1.72941 6.6H6.52941V1.87059C6.52941 0.837489 7.3669 0 8.4 0C9.4331 0 10.2706 0.837491 10.2706 1.87059V6.6H15.0706C16.0257 6.6 16.8 7.37429 16.8 8.32941C16.8 9.28454 16.0257 10.0588 15.0706 10.0588H10.2706V14.7882C10.2706 15.8213 9.4331 16.6588 8.4 16.6588Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcPlusButton}"/>
+                                                    </Grid>
+                                                </Viewbox>
+                                            </Button>
                                         </Grid>
 
                                         <Grid x:Name="MiniCurrencyCalculatorRow5Grid"
@@ -635,7 +688,14 @@
 
                                             <Button x:Name="MiniCurrencyCalcDigit0Button" Grid.Column="0" Grid.ColumnSpan="3" Tag="0" Content="0" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
                                             <Button x:Name="MiniCurrencyCalcCommaButton" Grid.Column="4" Tag="," Content="," Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
-                                            <Button x:Name="MiniCurrencyCalcEqualsButton" Grid.Column="6" Tag="=" Content="=" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click"/>
+                                            <Button x:Name="MiniCurrencyCalcEqualsButton" Grid.Column="6" Tag="=" Style="{StaticResource MiniCurrencyCalculatorButtonBaseStyle}" Click="MiniCurrencyCalculatorButton_Click">
+                                                <Viewbox x:Name="MiniCurrencyCalcEqualsIconGrid" Width="17" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Grid Width="17" Height="14">
+                                                        <Path Data="M1.88611 3.77222C0.844442 3.77222 0 2.92778 0 1.88611C0 0.84444 0.844441 0 1.88611 0H14.9139C15.9556 0 16.8 0.84444 16.8 1.88611C16.8 2.92778 15.9556 3.77222 14.9139 3.77222H1.88611ZM1.88611 13.2222C0.844442 13.2222 0 12.3778 0 11.3361C0 10.2944 0.844441 9.45 1.88611 9.45H14.9139C15.9556 9.45 16.8 10.2944 16.8 11.3361C16.8 12.3778 15.9556 13.2222 14.9139 13.2222H1.88611Z"
+                                                              Fill="{Binding Foreground, ElementName=MiniCurrencyCalcEqualsButton}"/>
+                                                    </Grid>
+                                                </Viewbox>
+                                            </Button>
                                         </Grid>
                                     </StackPanel>
                                 </Grid>

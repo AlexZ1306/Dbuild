@@ -48,6 +48,22 @@ namespace Notepads.Views.MainPage
         private const double MiniCurrencyBaseTopLayoutMargin = 16;
         private const double MiniCurrencyCalculatorHoverDarkenFactor = 0.84;
         private const double MiniCurrencyCalculatorPressedDarkenFactor = 0.72;
+        private const double MiniCurrencyCalculatorOperationFontDelta = 3;
+        private const double MiniCurrencyCalculatorAcFontDelta = -1;
+        private const double MiniCurrencyBaseCalculatorBackspaceIconWidth = 23;
+        private const double MiniCurrencyBaseCalculatorBackspaceIconHeight = 17;
+        private const double MiniCurrencyBaseCalculatorPercentIconWidth = 17;
+        private const double MiniCurrencyBaseCalculatorPercentIconHeight = 17;
+        private const double MiniCurrencyBaseCalculatorDivideIconWidth = 17;
+        private const double MiniCurrencyBaseCalculatorDivideIconHeight = 17;
+        private const double MiniCurrencyBaseCalculatorMultiplyIconWidth = 16;
+        private const double MiniCurrencyBaseCalculatorMultiplyIconHeight = 16;
+        private const double MiniCurrencyBaseCalculatorMinusIconWidth = 17;
+        private const double MiniCurrencyBaseCalculatorMinusIconHeight = 4;
+        private const double MiniCurrencyBaseCalculatorPlusIconWidth = 17;
+        private const double MiniCurrencyBaseCalculatorPlusIconHeight = 17;
+        private const double MiniCurrencyBaseCalculatorEqualsIconWidth = 17;
+        private const double MiniCurrencyBaseCalculatorEqualsIconHeight = 14;
         private static readonly Color MiniCurrencyAdaptiveTextDarkColor = Color.FromArgb(255, 0x3E, 0x3E, 0x3E);
         private static readonly Color MiniCurrencyAdaptiveTextLightColor = Color.FromArgb(255, 0xF2, 0xF2, 0xF2);
 
@@ -654,10 +670,10 @@ namespace Notepads.Views.MainPage
                 ApplyMiniCurrencyCalculatorButtonPalette(button, operatorBackground);
             }
 
-            ApplyMiniCurrencyCalculatorButtonPalette(MiniCurrencyCalcEqualsButton, equalsBackground);
+            ApplyMiniCurrencyCalculatorButtonPalette(MiniCurrencyCalcEqualsButton, equalsBackground, keepForegroundOnInteraction: true);
         }
 
-        private void ApplyMiniCurrencyCalculatorButtonPalette(Button button, Color baseBackground)
+        private void ApplyMiniCurrencyCalculatorButtonPalette(Button button, Color baseBackground, bool keepForegroundOnInteraction = false)
         {
             if (button == null)
             {
@@ -670,6 +686,8 @@ namespace Notepads.Views.MainPage
             var baseForeground = GetMiniCurrencyAdaptiveTextColor(GetMiniCurrencyEffectiveCardColor(baseBackground));
             var hoverForeground = GetMiniCurrencyAdaptiveTextColor(GetMiniCurrencyEffectiveCardColor(hoverBackground));
             var pressedForeground = GetMiniCurrencyAdaptiveTextColor(GetMiniCurrencyEffectiveCardColor(pressedBackground));
+            var interactiveForeground = keepForegroundOnInteraction ? baseForeground : hoverForeground;
+            var pressedStateForeground = keepForegroundOnInteraction ? baseForeground : pressedForeground;
 
             button.Background = new SolidColorBrush(baseBackground);
             button.Foreground = new SolidColorBrush(baseForeground);
@@ -678,8 +696,8 @@ namespace Notepads.Views.MainPage
             SetMiniCurrencyButtonStateBrush(button, "ButtonBackgroundPointerOver", hoverBackground);
             SetMiniCurrencyButtonStateBrush(button, "ButtonBackgroundPressed", pressedBackground);
             SetMiniCurrencyButtonStateBrush(button, "ButtonForeground", baseForeground);
-            SetMiniCurrencyButtonStateBrush(button, "ButtonForegroundPointerOver", hoverForeground);
-            SetMiniCurrencyButtonStateBrush(button, "ButtonForegroundPressed", pressedForeground);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonForegroundPointerOver", interactiveForeground);
+            SetMiniCurrencyButtonStateBrush(button, "ButtonForegroundPressed", pressedStateForeground);
             SetMiniCurrencyButtonStateBrush(button, "ButtonBorderBrush", Colors.Transparent);
             SetMiniCurrencyButtonStateBrush(button, "ButtonBorderBrushPointerOver", Colors.Transparent);
             SetMiniCurrencyButtonStateBrush(button, "ButtonBorderBrushPressed", Colors.Transparent);
@@ -1183,9 +1201,68 @@ namespace Notepads.Views.MainPage
                 button.FontSize = buttonFontSize;
             }
 
+            var operationFontSize = ScaleMetric(MiniCurrencyBaseCalculatorButtonFontSize + MiniCurrencyCalculatorOperationFontDelta, factor);
+            ApplyMiniCurrencyCalculatorOperationFontSize(operationFontSize);
+
+            if (MiniCurrencyCalcAcButton != null)
+            {
+                MiniCurrencyCalcAcButton.FontSize = ScaleMetric(MiniCurrencyBaseCalculatorButtonFontSize + MiniCurrencyCalculatorAcFontDelta, factor);
+            }
+
+            ApplyMiniCurrencyCalculatorIconScale(factor);
             ApplyMiniCurrencyCalculatorVisualSettings();
 
             UpdateMiniCurrencyCalculatorRowWidths();
+        }
+
+        private void ApplyMiniCurrencyCalculatorIconScale(double factor)
+        {
+            ApplyMiniCurrencyCalculatorIconSize(
+                MiniCurrencyCalcBackspaceIconGrid,
+                MiniCurrencyBaseCalculatorBackspaceIconWidth,
+                MiniCurrencyBaseCalculatorBackspaceIconHeight,
+                factor);
+            ApplyMiniCurrencyCalculatorIconSize(
+                MiniCurrencyCalcPercentIconGrid,
+                MiniCurrencyBaseCalculatorPercentIconWidth,
+                MiniCurrencyBaseCalculatorPercentIconHeight,
+                factor);
+            ApplyMiniCurrencyCalculatorIconSize(
+                MiniCurrencyCalcDivideIconGrid,
+                MiniCurrencyBaseCalculatorDivideIconWidth,
+                MiniCurrencyBaseCalculatorDivideIconHeight,
+                factor);
+            ApplyMiniCurrencyCalculatorIconSize(
+                MiniCurrencyCalcMultiplyIconGrid,
+                MiniCurrencyBaseCalculatorMultiplyIconWidth,
+                MiniCurrencyBaseCalculatorMultiplyIconHeight,
+                factor);
+            ApplyMiniCurrencyCalculatorIconSize(
+                MiniCurrencyCalcMinusIconGrid,
+                MiniCurrencyBaseCalculatorMinusIconWidth,
+                MiniCurrencyBaseCalculatorMinusIconHeight,
+                factor);
+            ApplyMiniCurrencyCalculatorIconSize(
+                MiniCurrencyCalcPlusIconGrid,
+                MiniCurrencyBaseCalculatorPlusIconWidth,
+                MiniCurrencyBaseCalculatorPlusIconHeight,
+                factor);
+            ApplyMiniCurrencyCalculatorIconSize(
+                MiniCurrencyCalcEqualsIconGrid,
+                MiniCurrencyBaseCalculatorEqualsIconWidth,
+                MiniCurrencyBaseCalculatorEqualsIconHeight,
+                factor);
+        }
+
+        private static void ApplyMiniCurrencyCalculatorIconSize(FrameworkElement icon, double baseWidth, double baseHeight, double factor)
+        {
+            if (icon == null)
+            {
+                return;
+            }
+
+            icon.Width = ScaleMetric(baseWidth, factor);
+            icon.Height = ScaleMetric(baseHeight, factor);
         }
 
         private static void ApplyMiniCurrencyCalculatorStandardRowLayout(Grid row, double gapWidth, double rowGap)
@@ -1208,6 +1285,26 @@ namespace Notepads.Views.MainPage
             row.ColumnDefinitions[4].Width = new GridLength(1, GridUnitType.Star);
             row.ColumnDefinitions[5].Width = new GridLength(gapWidth);
             row.ColumnDefinitions[6].Width = new GridLength(1, GridUnitType.Star);
+        }
+
+        private void ApplyMiniCurrencyCalculatorOperationFontSize(double fontSize)
+        {
+            var operationButtons = new[]
+            {
+                MiniCurrencyCalcDivideButton,
+                MiniCurrencyCalcMultiplyButton,
+                MiniCurrencyCalcMinusButton,
+                MiniCurrencyCalcPlusButton,
+                MiniCurrencyCalcEqualsButton
+            };
+
+            foreach (var button in operationButtons)
+            {
+                if (button != null)
+                {
+                    button.FontSize = fontSize;
+                }
+            }
         }
 
         private void UpdateMiniCurrencyCalculatorRowWidths()
