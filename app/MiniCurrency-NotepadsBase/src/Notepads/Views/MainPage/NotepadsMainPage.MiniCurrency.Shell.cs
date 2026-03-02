@@ -54,9 +54,39 @@ namespace Notepads.Views.MainPage
             {
                 EncodingIndicator.IsTapEnabled = true;
                 EncodingIndicator.ContextFlyout = null;
-                EncodingIndicator.Text = _miniCurrencyLatestStatusText;
+                EncodingIndicator.PointerEntered -= EncodingIndicator_PointerEntered;
+                EncodingIndicator.PointerExited -= EncodingIndicator_PointerExited;
+                EncodingIndicator.PointerCanceled -= EncodingIndicator_PointerExited;
+                EncodingIndicator.PointerCaptureLost -= EncodingIndicator_PointerExited;
+                EncodingIndicator.PointerEntered += EncodingIndicator_PointerEntered;
+                EncodingIndicator.PointerExited += EncodingIndicator_PointerExited;
+                EncodingIndicator.PointerCanceled += EncodingIndicator_PointerExited;
+                EncodingIndicator.PointerCaptureLost += EncodingIndicator_PointerExited;
+                UpdateMiniCurrencyStatusIndicatorText();
                 ToolTipService.SetToolTip(EncodingIndicator, "Обновить курсы валют");
             }
+        }
+
+        private void EncodingIndicator_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            if (!IsMiniCurrencyMode)
+            {
+                return;
+            }
+
+            _miniCurrencyStatusIndicatorHovered = true;
+            UpdateMiniCurrencyStatusIndicatorText();
+        }
+
+        private void EncodingIndicator_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            if (!IsMiniCurrencyMode)
+            {
+                return;
+            }
+
+            _miniCurrencyStatusIndicatorHovered = false;
+            UpdateMiniCurrencyStatusIndicatorText();
         }
 
         private void BuildMiniCurrencyCurrencyManagerMenu()

@@ -129,7 +129,10 @@ namespace Notepads.Views.MainPage
 
                 if (fiatUpdated || cryptoUpdated > 0 || supplementalUpdated > 0 || manualFallbackApplied > 0)
                 {
-                    SetMiniCurrencyRatesStatus("Курсы обновлены");
+                    _miniCurrencyLastSuccessfulRatesUpdateLocal = DateTimeOffset.Now;
+                    SetMiniCurrencyRatesStatus(
+                        FormatMiniCurrencyRatesUpdatedStatus(_miniCurrencyLastSuccessfulRatesUpdateLocal.Value),
+                        supportsHoverRefreshPrefix: true);
                     ConvertFromMiniCurrency(_miniCurrencyActiveCode);
                     return;
                 }

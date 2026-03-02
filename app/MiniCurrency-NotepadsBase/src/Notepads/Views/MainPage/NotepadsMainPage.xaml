@@ -767,7 +767,7 @@
                             <TextBlock Grid.Row="3"
                                        x:Name="CurrencyStatusText"
                                        Margin="0,8,0,0"
-                                       Text="Курсы обновлены"
+                                       Text="обновлено --.--.--, --:--"
                                        Opacity="0.75"
                                        FontSize="12"
                                        Visibility="Collapsed"/>

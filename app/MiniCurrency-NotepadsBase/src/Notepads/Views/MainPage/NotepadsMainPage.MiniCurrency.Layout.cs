@@ -220,24 +220,65 @@ namespace Notepads.Views.MainPage
                 CurrencyStatusText.Text = _miniCurrencyLatestStatusText;
             }
 
-            if (EncodingIndicator != null)
-            {
-                EncodingIndicator.Text = _miniCurrencyLatestStatusText;
-            }
+            UpdateMiniCurrencyStatusIndicatorText();
         }
 
-        private void SetMiniCurrencyRatesStatus(string text)
+        private void SetMiniCurrencyRatesStatus(string text, bool supportsHoverRefreshPrefix = false)
         {
             _miniCurrencyRatesStatusText = text ?? string.Empty;
+            _miniCurrencyRatesStatusSupportsHoverRefreshPrefix = supportsHoverRefreshPrefix;
             SetMiniCurrencyStatus(_miniCurrencyRatesStatusText);
         }
 
         private void RestoreMiniCurrencyRatesStatus()
         {
             var status = string.IsNullOrWhiteSpace(_miniCurrencyRatesStatusText)
-                ? "Курсы обновлены"
+                ? (_miniCurrencyLastSuccessfulRatesUpdateLocal.HasValue
+                    ? FormatMiniCurrencyRatesUpdatedStatus(_miniCurrencyLastSuccessfulRatesUpdateLocal.Value)
+                    : "обновлено --.--.--, --:--")
                 : _miniCurrencyRatesStatusText;
+
+            if (string.IsNullOrWhiteSpace(_miniCurrencyRatesStatusText))
+            {
+                _miniCurrencyRatesStatusSupportsHoverRefreshPrefix = true;
+            }
+
             SetMiniCurrencyStatus(status);
+        }
+
+        private static string FormatMiniCurrencyRatesUpdatedStatus(DateTimeOffset localTimestamp)
+        {
+            return $"обновлено {localTimestamp:dd.MM.yy, HH:mm}";
+        }
+
+        private string GetMiniCurrencyStatusIndicatorDisplayText()
+        {
+            if (string.IsNullOrWhiteSpace(_miniCurrencyLatestStatusText))
+            {
+                return string.Empty;
+            }
+
+            var isShowingRatesStatus = string.Equals(
+                _miniCurrencyLatestStatusText,
+                _miniCurrencyRatesStatusText,
+                StringComparison.Ordinal);
+
+            if (_miniCurrencyStatusIndicatorHovered &&
+                _miniCurrencyRatesStatusSupportsHoverRefreshPrefix &&
+                isShowingRatesStatus)
+            {
+                return $"↻ {_miniCurrencyLatestStatusText}";
+            }
+
+            return _miniCurrencyLatestStatusText;
+        }
+
+        private void UpdateMiniCurrencyStatusIndicatorText()
+        {
+            if (EncodingIndicator != null)
+            {
+                EncodingIndicator.Text = GetMiniCurrencyStatusIndicatorDisplayText();
+            }
         }
 
         private void InitializeMiniCurrencyFlags()
