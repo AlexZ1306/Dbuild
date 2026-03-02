@@ -35,6 +35,8 @@ namespace Notepads.Views.MainPage
         private const double MiniCurrencyBaseFlagCodeGap = 14;
         private const double MiniCurrencyBaseCodeFontSize = 18;
         private const double MiniCurrencyBaseValueFontSize = 24;
+        private const double MiniCurrencyBaseValueMinFontSize = 12;
+        private const double MiniCurrencyBaseValueFontFitSafetyPadding = 8;
         private const double MiniCurrencyBaseFieldHorizontalPadding = 16;
         private const double MiniCurrencyBaseRemoveButtonSize = 34;
         private const double MiniCurrencyBaseRemoveButtonLeftMargin = 8;
@@ -905,6 +907,7 @@ namespace Notepads.Views.MainPage
             foreach (var input in _miniCurrencyInputs.Values)
             {
                 ApplyMiniCurrencyValueFontWeightToInput(input, weight);
+                ApplyMiniCurrencyValueInputAdaptiveFontSizing(input);
             }
         }
 
@@ -1298,6 +1301,7 @@ namespace Notepads.Views.MainPage
                     MiniCurrencyBaseFieldHorizontalPadding, 0,
                     MiniCurrencyBaseFieldHorizontalPadding, 0, factor);
                 input.CornerRadius = new CornerRadius(ScaleMetric(MiniCurrencyBaseValueCardCornerRadius, factor));
+                ApplyMiniCurrencyValueInputAdaptiveFontSizing(input, factor);
             }
 
             var removeButton = row.Children.Count > 3
@@ -1428,6 +1432,130 @@ namespace Notepads.Views.MainPage
                     row.HorizontalAlignment = HorizontalAlignment.Left;
                 }
             }
+
+            ApplyMiniCurrencyValueInputAdaptiveFontSizingForAllRows();
+        }
+
+        private void ApplyMiniCurrencyValueInputAdaptiveFontSizingForAllRows()
+        {
+            var factor = GetMiniCurrencyUiScaleFactor(AppSettingsService.MiniCurrencyUiScalePercent);
+            foreach (var input in _miniCurrencyInputs.Values)
+            {
+                ApplyMiniCurrencyValueInputAdaptiveFontSizing(input, factor);
+            }
+        }
+
+        private void ApplyMiniCurrencyValueInputAdaptiveFontSizing(TextBox input)
+        {
+            var factor = GetMiniCurrencyUiScaleFactor(AppSettingsService.MiniCurrencyUiScalePercent);
+            ApplyMiniCurrencyValueInputAdaptiveFontSizing(input, factor);
+        }
+
+        private void ApplyMiniCurrencyValueInputAdaptiveFontSizing(TextBox input, double factor)
+        {
+            if (input == null)
+            {
+                return;
+            }
+
+            var baseFontSize = ScaleMetric(MiniCurrencyBaseValueFontSize, factor);
+            var minFontSize = ScaleMetric(MiniCurrencyBaseValueMinFontSize, factor);
+            input.FontSize = baseFontSize;
+
+            var inputWidth = input.ActualWidth;
+            if (!IsMiniCurrencyFinitePositive(inputWidth) && input.Parent is Grid parentGrid)
+            {
+                inputWidth = parentGrid.ActualWidth;
+                if (IsMiniCurrencyFinitePositive(inputWidth) && parentGrid.ColumnDefinitions.Count > 0)
+                {
+                    var inputColumn = Math.Max(0, Grid.GetColumn(input));
+                    var inputColumnSpan = Math.Max(1, Grid.GetColumnSpan(input));
+                    for (var i = 0; i < parentGrid.ColumnDefinitions.Count; i++)
+                    {
+                        var inInputSpan = i >= inputColumn && i < inputColumn + inputColumnSpan;
+                        if (!inInputSpan)
+                        {
+                            inputWidth -= parentGrid.ColumnDefinitions[i].ActualWidth;
+                        }
+                    }
+                }
+            }
+
+            if (!IsMiniCurrencyFinitePositive(inputWidth))
+            {
+                return;
+            }
+
+            var availableTextWidth =
+                inputWidth -
+                input.Margin.Left -
+                input.Margin.Right -
+                input.Padding.Left -
+                input.Padding.Right -
+                ScaleMetric(MiniCurrencyBaseValueFontFitSafetyPadding, factor);
+
+            if (!IsMiniCurrencyFinitePositive(availableTextWidth))
+            {
+                return;
+            }
+
+            FitMiniCurrencyValueTextBoxToWidth(input, baseFontSize, minFontSize, availableTextWidth);
+        }
+
+        private static void FitMiniCurrencyValueTextBoxToWidth(TextBox textBox, double baseFontSize, double minFontSize, double availableWidth)
+        {
+            if (textBox == null || !IsMiniCurrencyFinitePositive(availableWidth))
+            {
+                return;
+            }
+
+            var text = textBox.Text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                text = "0";
+            }
+
+            var probe = new TextBlock
+            {
+                Text = text,
+                TextWrapping = TextWrapping.NoWrap,
+                FontFamily = textBox.FontFamily,
+                FontStyle = textBox.FontStyle,
+                FontWeight = textBox.FontWeight,
+                CharacterSpacing = textBox.CharacterSpacing
+            };
+
+            var targetFontSize = Math.Max(minFontSize, baseFontSize);
+            probe.FontSize = targetFontSize;
+            probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+
+            if (probe.DesiredSize.Width <= availableWidth)
+            {
+                textBox.FontSize = targetFontSize;
+                return;
+            }
+
+            var estimatedScale = availableWidth / probe.DesiredSize.Width;
+            if (estimatedScale > 0 && estimatedScale < 1)
+            {
+                targetFontSize = Math.Max(minFontSize, Math.Floor((targetFontSize * estimatedScale) * 2) / 2);
+                probe.FontSize = targetFontSize;
+                probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            }
+
+            while (targetFontSize > minFontSize)
+            {
+                if (probe.DesiredSize.Width <= availableWidth)
+                {
+                    break;
+                }
+
+                targetFontSize = Math.Max(minFontSize, targetFontSize - 0.5);
+                probe.FontSize = targetFontSize;
+                probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            }
+
+            textBox.FontSize = targetFontSize;
         }
 
         private void ApplyMiniCurrencyMainContentVisibility()

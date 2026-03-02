@@ -1074,6 +1074,7 @@ namespace Notepads.Views.MainPage
 
             _miniCurrencyActiveCode = code;
             HighlightMiniCurrencyActiveRow(code);
+            ApplyMiniCurrencyValueInputAdaptiveFontSizing(textBox);
             UpdateMiniCurrencyCalculatorStandaloneHeaderText();
 
             if (IsMiniCurrencyExpressionText(textBox.Text))
@@ -1870,6 +1871,7 @@ namespace Notepads.Views.MainPage
                 _miniCurrencyIsUpdating = false;
             }
 
+            ApplyMiniCurrencyValueInputAdaptiveFontSizingForAllRows();
             SaveMiniCurrencyValues();
         }
 
