@@ -35,11 +35,21 @@
                     <RadioButton x:Uid="/Settings/PersonalizationPage_ThemeModeSettings_DarkModeRadioButton" Style="{StaticResource CustomRadioButtonStyle}" x:Name="ThemeModeDarkButton" Tag="Dark" />
                     <RadioButton x:Uid="/Settings/PersonalizationPage_ThemeModeSettings_WindowsModeRadioButton" Style="{StaticResource CustomRadioButtonStyle}" x:Name="ThemeModeDefaultButton" Tag="Default" />
                 </StackPanel>
-                <TextBlock x:Name="BackgroundTintOpacityTitle"
-                    x:Uid="/Settings/PersonalizationPage_BackgroundTintOpacitySettings_Title"
-                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
-                    Margin="0,20,0,0"
-                    FontWeight="Normal"/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,20,0,0">
+                    <TextBlock x:Name="BackgroundTintOpacityTitle"
+                               x:Uid="/Settings/PersonalizationPage_BackgroundTintOpacitySettings_Title"
+                               Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                               Margin="0"
+                               FontWeight="Normal"/>
+                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                              Glyph="&#xE946;"
+                              Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              FontSize="14"
+                              Opacity="0.85"
+                              ToolTipService.ToolTip="Непрозрачность окна и акрилового фона. Учитывайте, что акриловое размытие работает только тогда, когда включены эффекты прозрачности и отключается в режиме экономии заряда."/>
+                </StackPanel>
                 <StackPanel x:Name="BackgroundTintOpacityControls" Margin="0,10,0,0">
                     <StackPanel Orientation="Horizontal">
                         <Slider Style="{StaticResource CustomSliderStyle}" 
@@ -57,14 +67,23 @@
                                    VerticalAlignment="Center" 
                                    FontSize="18"/>
                     </StackPanel>
-                    <TextBlock x:Uid="/Settings/PersonalizationPage_BackgroundTintOpacitySettings_Description" Style="{ThemeResource DescriptionTextBlockStyle}" Margin="0,8,0,0"/>
                 </StackPanel>
-                <TextBlock
-                    x:Name="MiniCurrencyUiScaleTitle"
-                    Text="Масштаб MiniCurrency"
-                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
-                    Margin="0,20,0,0"
-                    FontWeight="Normal"/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,20,0,0">
+                    <TextBlock
+                        x:Name="MiniCurrencyUiScaleTitle"
+                        Text="Масштаб MiniCurrency"
+                        Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                        Margin="0"
+                        FontWeight="Normal"/>
+                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                              Glyph="&#xE946;"
+                              Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              FontSize="14"
+                              Opacity="0.85"
+                              ToolTipService.ToolTip="50% — текущий размер (меньше 50% уменьшает, больше 50% увеличивает)"/>
+                </StackPanel>
                 <StackPanel x:Name="MiniCurrencyUiScaleControls" Margin="0,10,0,0">
                     <StackPanel Orientation="Horizontal">
                         <Slider Style="{StaticResource CustomSliderStyle}"
@@ -82,17 +101,23 @@
                                    VerticalAlignment="Center"
                                    FontSize="18"/>
                     </StackPanel>
-                    <TextBlock Text="50% — текущий размер (меньше 50% уменьшает, больше 50% увеличивает)"
-                               Style="{ThemeResource DescriptionTextBlockStyle}"
-                               Margin="0,8,0,0"
-                               TextWrapping="WrapWholeWords"/>
                 </StackPanel>
-                <TextBlock
-                    x:Name="MiniCurrencyActiveCardOpacityTitle"
-                    Text="Непрозрачность активной подложки MiniCurrency"
-                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
-                    Margin="0,20,0,0"
-                    FontWeight="Normal"/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,20,0,0">
+                    <TextBlock
+                        x:Name="MiniCurrencyActiveCardOpacityTitle"
+                        Text="Непрозрачность активной подложки MiniCurrency"
+                        Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                        Margin="0"
+                        FontWeight="Normal"/>
+                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                              Glyph="&#xE946;"
+                              Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              FontSize="14"
+                              Opacity="0.85"
+                              ToolTipService.ToolTip="Регулирует непрозрачность активной подложки строки, где вводится сумма"/>
+                </StackPanel>
                 <StackPanel x:Name="MiniCurrencyActiveCardOpacityControls" Margin="0,10,0,0">
                     <StackPanel Orientation="Horizontal">
                         <Slider Style="{StaticResource CustomSliderStyle}"
@@ -110,17 +135,23 @@
                                    VerticalAlignment="Center"
                                    FontSize="18"/>
                     </StackPanel>
-                    <TextBlock Text="Регулирует непрозрачность активной подложки строки, где вводится сумма"
-                               Style="{ThemeResource DescriptionTextBlockStyle}"
-                               Margin="0,8,0,0"
-                               TextWrapping="WrapWholeWords"/>
                 </StackPanel>
-                <TextBlock
-                    x:Name="MiniCurrencyCardOpacityTitle"
-                    Text="Непрозрачность неактивных подложек MiniCurrency"
-                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
-                    Margin="0,20,0,0"
-                    FontWeight="Normal"/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,20,0,0">
+                    <TextBlock
+                        x:Name="MiniCurrencyCardOpacityTitle"
+                        Text="Непрозрачность неактивных подложек MiniCurrency"
+                        Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                        Margin="0"
+                        FontWeight="Normal"/>
+                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                              Glyph="&#xE946;"
+                              Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              FontSize="14"
+                              Opacity="0.85"
+                              ToolTipService.ToolTip="Регулирует непрозрачность подложек под флагами, кодами и суммами валют (100% — плотный цвет)"/>
+                </StackPanel>
                 <StackPanel x:Name="MiniCurrencyCardOpacityControls" Margin="0,10,0,0">
                     <StackPanel Orientation="Horizontal">
                         <Slider Style="{StaticResource CustomSliderStyle}"
@@ -138,17 +169,23 @@
                                    VerticalAlignment="Center"
                                    FontSize="18"/>
                     </StackPanel>
-                    <TextBlock Text="Регулирует непрозрачность подложек под флагами, кодами и суммами валют (100% — плотный цвет)"
-                               Style="{ThemeResource DescriptionTextBlockStyle}"
-                               Margin="0,8,0,0"
-                               TextWrapping="WrapWholeWords"/>
                 </StackPanel>
-                <TextBlock
-                    x:Name="MiniCurrencyValueFontWeightTitle"
-                    Text="Жирность шрифта суммы MiniCurrency"
-                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
-                    Margin="0,20,0,0"
-                    FontWeight="Normal"/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,20,0,0">
+                    <TextBlock
+                        x:Name="MiniCurrencyValueFontWeightTitle"
+                        Text="Жирность шрифта суммы MiniCurrency"
+                        Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                        Margin="0"
+                        FontWeight="Normal"/>
+                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                              Glyph="&#xE946;"
+                              Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              FontSize="14"
+                              Opacity="0.85"
+                              ToolTipService.ToolTip="Меняет только жирность текста суммы на главном экране (100 — тонкий, 900 — очень жирный)"/>
+                </StackPanel>
                 <StackPanel x:Name="MiniCurrencyValueFontWeightControls" Margin="0,10,0,0">
                     <StackPanel Orientation="Horizontal">
                         <Slider Style="{StaticResource CustomSliderStyle}"
@@ -162,17 +199,23 @@
                                    VerticalAlignment="Center"
                                    FontSize="18"/>
                     </StackPanel>
-                    <TextBlock Text="Меняет только жирность текста суммы на главном экране (100 — тонкий, 900 — очень жирный)"
-                               Style="{ThemeResource DescriptionTextBlockStyle}"
-                               Margin="0,8,0,0"
-                               TextWrapping="WrapWholeWords"/>
                 </StackPanel>
-                <TextBlock
-                    x:Name="MiniCurrencyInactiveCardColorTitle"
-                    Text="Цвет неактивных подложек MiniCurrency"
-                    Style="{StaticResource CompactSubtitleTextBlockStyle}"
-                    Margin="0,20,0,0"
-                    FontWeight="Normal"/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,20,0,0">
+                    <TextBlock
+                        x:Name="MiniCurrencyInactiveCardColorTitle"
+                        Text="Цвет неактивных подложек MiniCurrency"
+                        Style="{StaticResource CompactSubtitleTextBlockStyle}"
+                        Margin="0"
+                        FontWeight="Normal"/>
+                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                              Glyph="&#xE946;"
+                              Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              FontSize="14"
+                              Opacity="0.85"
+                              ToolTipService.ToolTip="Настраивает базовый цвет неактивных подложек (флаг/код и сумма). Прозрачность регулируется отдельным ползунком выше"/>
+                </StackPanel>
                 <StackPanel x:Name="MiniCurrencyInactiveCardColorControls" Margin="0,10,0,0">
                     <ToggleSwitch x:Name="MiniCurrencyUseDefaultInactiveCardColorToggle"
                                   Style="{StaticResource CustomToggleSwitchStyle}"
@@ -190,10 +233,6 @@
                             IsAlphaTextInputVisible="False">
                         </ColorPicker>
                     </Viewbox>
-                    <TextBlock Text="Настраивает базовый цвет неактивных подложек (флаг/код и сумма). Прозрачность регулируется отдельным ползунком выше"
-                               Style="{ThemeResource DescriptionTextBlockStyle}"
-                               Margin="0,8,0,0"
-                               TextWrapping="WrapWholeWords"/>
                 </StackPanel>
                 <TextBlock
                     x:Uid="/Settings/PersonalizationPage_AccentColorSettings_Title"
