@@ -74,6 +74,8 @@ namespace Notepads.Views.MainPage
             AppSettingsService.OnMiniCurrencyShowCurrenciesChanged += MiniCurrencyShowCurrenciesChanged;
             AppSettingsService.OnMiniCurrencyShowCalculatorChanged -= MiniCurrencyShowCalculatorChanged;
             AppSettingsService.OnMiniCurrencyShowCalculatorChanged += MiniCurrencyShowCalculatorChanged;
+            AppSettingsService.OnMiniCurrencyShowDinoChanged -= MiniCurrencyShowDinoChanged;
+            AppSettingsService.OnMiniCurrencyShowDinoChanged += MiniCurrencyShowDinoChanged;
             ThemeSettingsService.OnAccentColorChanged -= MiniCurrencyThemeSettingsService_OnAccentColorChanged;
             ThemeSettingsService.OnAccentColorChanged += MiniCurrencyThemeSettingsService_OnAccentColorChanged;
 
@@ -84,6 +86,7 @@ namespace Notepads.Views.MainPage
             }
 
             InitializeMiniCurrencyFlags();
+            InitializeMiniCurrencyDinoMode();
             ApplyMiniCurrencyUiScale();
             ApplyMiniCurrencyValueFontWeight();
             RestoreMiniCurrencyRowOrder();
@@ -94,6 +97,11 @@ namespace Notepads.Views.MainPage
             HighlightMiniCurrencyActiveRow(_miniCurrencyActiveCode);
             ConvertFromMiniCurrency(_miniCurrencyActiveCode);
             ApplyMiniCurrencyMainContentVisibility();
+            if (AppSettingsService.MiniCurrencyShowDino)
+            {
+                _ = EnsureMiniCurrencyDinoLoadedAsync();
+            }
+
             UpdateMiniCurrencyVisibilityMenuItemsVisual();
             _ = LoadMiniCurrencyRatesAsync(silent: true);
         }

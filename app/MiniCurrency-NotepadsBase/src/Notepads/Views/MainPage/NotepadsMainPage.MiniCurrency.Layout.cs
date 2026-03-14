@@ -299,7 +299,9 @@ namespace Notepads.Views.MainPage
 
         private bool IsMiniCurrencyCalculatorOnlyMode()
         {
-            return !AppSettingsService.MiniCurrencyShowCurrencies && AppSettingsService.MiniCurrencyShowCalculator;
+            return !IsMiniCurrencyDinoModeEnabled() &&
+                   !AppSettingsService.MiniCurrencyShowCurrencies &&
+                   AppSettingsService.MiniCurrencyShowCalculator;
         }
 
         private string GetMiniCurrencyCalculatorStandaloneResultText()
@@ -1589,13 +1591,16 @@ namespace Notepads.Views.MainPage
 
         private void ApplyMiniCurrencyMainContentVisibility()
         {
-            var showCurrencies = AppSettingsService.MiniCurrencyShowCurrencies;
-            var showCalculator = AppSettingsService.MiniCurrencyShowCalculator;
+            var showDino = AppSettingsService.MiniCurrencyShowDino;
+            var showCurrencies = !showDino && AppSettingsService.MiniCurrencyShowCurrencies;
+            var showCalculator = !showDino && AppSettingsService.MiniCurrencyShowCalculator;
             var isFirstApply = !_miniCurrencyMainContentVisibilityInitialized;
             var animateCurrencies = showCurrencies && (isFirstApply || !_miniCurrencyMainContentShowCurrencies);
             var animateCalculator = showCalculator && (isFirstApply || !_miniCurrencyMainContentShowCalculator);
+            var animateDino = showDino && (isFirstApply || !_miniCurrencyMainContentShowDino);
             var hideCurrencies = !showCurrencies && _miniCurrencyMainContentVisibilityInitialized && _miniCurrencyMainContentShowCurrencies;
             var hideCalculator = !showCalculator && _miniCurrencyMainContentVisibilityInitialized && _miniCurrencyMainContentShowCalculator;
+            var hideDino = !showDino && _miniCurrencyMainContentVisibilityInitialized && _miniCurrencyMainContentShowDino;
 
             if (CurrencyRowsScrollViewer != null)
             {
@@ -1654,12 +1659,39 @@ namespace Notepads.Views.MainPage
 
             if (MiniCurrencyEmptyStateText != null)
             {
-                MiniCurrencyEmptyStateText.Visibility = (!showCurrencies && !showCalculator)
+                MiniCurrencyEmptyStateText.Visibility = (!showCurrencies && !showCalculator && !showDino)
                     ? Visibility.Visible
                     : Visibility.Collapsed;
             }
 
-            if (!showCurrencies && !showCalculator)
+            if (MiniCurrencyDinoOverlay != null)
+            {
+                if (showDino)
+                {
+                    MiniCurrencyDinoOverlay.Visibility = Visibility.Visible;
+                    if (animateDino)
+                    {
+                        AnimateMiniCurrencyMainContentAppearance(MiniCurrencyDinoOverlay);
+                    }
+                    else
+                    {
+                        ResetMiniCurrencyMainContentVisualState(MiniCurrencyDinoOverlay);
+                    }
+                }
+                else if (hideDino)
+                {
+                    AnimateMiniCurrencyMainContentDisappearance(
+                        MiniCurrencyDinoOverlay,
+                        () => !AppSettingsService.MiniCurrencyShowDino);
+                }
+                else
+                {
+                    MiniCurrencyDinoOverlay.Visibility = Visibility.Collapsed;
+                    ResetMiniCurrencyMainContentVisualState(MiniCurrencyDinoOverlay);
+                }
+            }
+
+            if (!showCurrencies && !showCalculator && !showDino)
             {
                 RestoreMiniCurrencyRatesStatus();
             }
@@ -1667,6 +1699,7 @@ namespace Notepads.Views.MainPage
             _miniCurrencyMainContentVisibilityInitialized = true;
             _miniCurrencyMainContentShowCurrencies = showCurrencies;
             _miniCurrencyMainContentShowCalculator = showCalculator;
+            _miniCurrencyMainContentShowDino = showDino;
 
             var factor = GetMiniCurrencyUiScaleFactor(AppSettingsService.MiniCurrencyUiScalePercent);
             UpdateMiniCurrencyCalculatorStandalonePresentation(factor);

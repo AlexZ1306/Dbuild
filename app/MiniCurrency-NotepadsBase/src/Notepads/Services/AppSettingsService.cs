@@ -40,6 +40,7 @@ namespace Notepads.Services
         public static event EventHandler<int> OnMiniCurrencyCalculatorButtonsOpacityPercentChanged;
         public static event EventHandler<bool> OnMiniCurrencyShowCurrenciesChanged;
         public static event EventHandler<bool> OnMiniCurrencyShowCalculatorChanged;
+        public static event EventHandler<bool> OnMiniCurrencyShowDinoChanged;
         public static event EventHandler<bool> OnSessionBackupAndRestoreOptionChanged;
         public static event EventHandler<bool> OnHighlightMisspelledWordsChanged;
 
@@ -244,6 +245,7 @@ namespace Notepads.Services
         private static int _miniCurrencyCalculatorButtonsOpacityPercent = 100;
         private static bool _miniCurrencyShowCurrencies = true;
         private static bool _miniCurrencyShowCalculator = true;
+        private static bool _miniCurrencyShowDino;
 
         public static bool ShowStatusBar
         {
@@ -424,6 +426,18 @@ namespace Notepads.Services
                 _miniCurrencyShowCalculator = value;
                 OnMiniCurrencyShowCalculatorChanged?.Invoke(null, value);
                 ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyShowCalculatorBool, value);
+            }
+        }
+
+        public static bool MiniCurrencyShowDino
+        {
+            get => _miniCurrencyShowDino;
+            set
+            {
+                if (_miniCurrencyShowDino == value) return;
+                _miniCurrencyShowDino = value;
+                OnMiniCurrencyShowDinoChanged?.Invoke(null, value);
+                ApplicationSettingsStore.Write(SettingsKey.MiniCurrencyShowDinoBool, value);
             }
         }
 
@@ -694,6 +708,15 @@ namespace Notepads.Services
             else
             {
                 _miniCurrencyShowCalculator = true;
+            }
+
+            if (ApplicationSettingsStore.Read(SettingsKey.MiniCurrencyShowDinoBool) is bool showDino)
+            {
+                _miniCurrencyShowDino = showDino;
+            }
+            else
+            {
+                _miniCurrencyShowDino = false;
             }
         }
 

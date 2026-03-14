@@ -784,7 +784,12 @@ namespace Notepads.Views.MainPage
 
         private void MiniCurrency_CoreWindow_CharacterReceived(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CharacterReceivedEventArgs args)
         {
-            if (!IsMiniCurrencyMode || !TryGetMiniCurrencyCalculatorActiveTextBox(out var textBox))
+            if (!IsMiniCurrencyMode || IsMiniCurrencyDinoModeEnabled())
+            {
+                return;
+            }
+
+            if (!TryGetMiniCurrencyCalculatorActiveTextBox(out var textBox))
             {
                 return;
             }
@@ -890,6 +895,11 @@ namespace Notepads.Views.MainPage
 
                     return;
                 case VirtualKey.Enter:
+                    if (IsMiniCurrencyDinoModeEnabled())
+                    {
+                        return;
+                    }
+
                     if (TryGetMiniCurrencyCalculatorActiveTextBox(out var activeTextBox))
                     {
                         MarkMiniCurrencyEqualsKeyboardInput();
@@ -899,6 +909,11 @@ namespace Notepads.Views.MainPage
                     }
 
                     return;
+            }
+
+            if (IsMiniCurrencyDinoModeEnabled())
+            {
+                return;
             }
 
             if (args.VirtualKey != VirtualKey.Back && args.VirtualKey != VirtualKey.Delete)

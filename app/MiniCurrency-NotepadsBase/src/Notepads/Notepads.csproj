@@ -138,6 +138,9 @@
   <PropertyGroup>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <AppxBundle>Never</AppxBundle>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Commands\IMouseCommand.cs" />
     <Compile Include="Commands\IKeyboardCommand.cs" />
@@ -231,6 +234,7 @@
     <Compile Include="Views\MainPage\NotepadsMainPage.MiniCurrency.Layout.cs" />
     <Compile Include="Views\MainPage\NotepadsMainPage.MiniCurrency.Interaction.cs" />
     <Compile Include="Views\MainPage\NotepadsMainPage.MiniCurrency.Orchestration.cs" />
+    <Compile Include="Views\MainPage\NotepadsMainPage.Dino.cs" />
     <Compile Include="Views\MainPage\NotepadsMainPage.StartupCommands.cs" />
     <Compile Include="Views\MainPage\NotepadsMainPage.Notification.cs" />
     <Compile Include="Views\MainPage\NotepadsMainPage.Theme.cs" />
@@ -488,6 +492,22 @@
       <MiniCurrencyFlagSvg Include="$(MSBuildProjectDirectory)\..\..\..\..\assets\flags-source-svg\*.svg" />
       <Content Include="@(MiniCurrencyFlagSvg)">
         <Link>Assets\Flags\%(Filename)%(Extension)</Link>
+      </Content>
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Keep the Dino game in a stable source folder inside the project so edits survive rebuilds.
+    Add files at target execution time because this old-style UWP project snapshots wildcard Includes
+    when the project is loaded.
+  -->
+  <Target Name="IncludeDinoAssets" BeforeTargets="AssignTargetPaths"
+          Condition="Exists('$(MSBuildProjectDirectory)\Assets\Dino')">
+    <ItemGroup>
+      <DinoAsset Include="$(MSBuildProjectDirectory)\Assets\Dino\**\*.*" />
+      <Content Include="@(DinoAsset)">
+        <Link>Assets\Dino\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
   </Target>

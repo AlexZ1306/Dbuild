@@ -111,8 +111,11 @@ namespace Notepads.Views.MainPage
         private bool _miniCurrencyMainContentVisibilityInitialized;
         private bool _miniCurrencyMainContentShowCurrencies;
         private bool _miniCurrencyMainContentShowCalculator;
+        private bool _miniCurrencyMainContentShowDino;
         private const string MiniCurrencyMainMenuCheckedMark = "✓";
         private MenuFlyout _miniCurrencyMainLayoutContextFlyout;
+        private bool _miniCurrencyDinoLoaded;
+        private bool _miniCurrencyDinoNavigationCompleted;
         private readonly Dictionary<string, string> _miniCurrencyDisplayNames = new Dictionary<string, string>()
         {
             { "ADA", "Cardano" },

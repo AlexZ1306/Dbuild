@@ -39,6 +39,7 @@ namespace Notepads.Views.MainPage
             MenuManageCurrenciesButton.Click += async (sender, args) => await OpenMiniCurrencyCurrencyManagementPaneAsync();
             MenuShowCurrenciesButton.Click += MenuShowCurrenciesButton_Click;
             MenuShowCalculatorButton.Click += MenuShowCalculatorButton_Click;
+            MenuDinoButton.Click += MenuDinoButton_Click;
 
             if (!App.IsPrimaryInstance)
             {
@@ -59,6 +60,7 @@ namespace Notepads.Views.MainPage
                 MenuManageCurrenciesButton.Visibility = Visibility.Collapsed;
                 MenuShowCurrenciesButton.Visibility = Visibility.Collapsed;
                 MenuShowCalculatorButton.Visibility = Visibility.Collapsed;
+                MenuDinoButton.Visibility = Visibility.Collapsed;
                 MenuSettingsButton.Visibility = Visibility.Collapsed;
             }
 

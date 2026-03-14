@@ -239,6 +239,15 @@
                                                               FontSize="15"/>
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
+                                            <MenuFlyoutItem x:Name="MenuDinoButton"
+                                                            Text="Dino"
+                                                            Visibility="Collapsed">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="Segoe MDL2 Assets"
+                                                              Glyph="&#xE7FC;"
+                                                              FontSize="15"/>
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem x:Uid="MainMenu_Button_Settings" x:Name="MenuSettingsButton" Icon="Setting">
                                                 <MenuFlyoutItem.KeyboardAccelerators>
                                                     <KeyboardAccelerator Key="F1" IsEnabled="False"/>
@@ -551,7 +560,7 @@
 
                                 <TextBlock Grid.Row="0"
                                            x:Name="MiniCurrencyEmptyStateText"
-                                           Text="Пусто. Включите «Валюты» или «Калькулятор» в меню."
+                                           Text="Пусто. Включите «Валюты», «Калькулятор» или «Dino» в меню."
                                            Visibility="Collapsed"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
@@ -756,6 +765,22 @@
                                             </Button>
                                         </Grid>
                                     </StackPanel>
+                                </Grid>
+
+                                <Grid Grid.RowSpan="4"
+                                      x:Name="MiniCurrencyDinoOverlay"
+                                      Visibility="Collapsed"
+                                      Opacity="1"
+                                      Background="Transparent">
+                                    <Grid Margin="0"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Stretch">
+                                        <WebView x:Name="DinoGameWebView"
+                                                 HorizontalAlignment="Stretch"
+                                                 VerticalAlignment="Stretch"
+                                                 Visibility="Visible"
+                                                 NavigationCompleted="DinoGameWebView_NavigationCompleted"/>
+                                    </Grid>
                                 </Grid>
                             </Grid>
 

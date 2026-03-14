@@ -1246,6 +1246,7 @@ namespace Notepads.Views.MainPage
                 MenuManageCurrenciesButton.Visibility = Visibility.Collapsed;
                 MenuShowCurrenciesButton.Visibility = Visibility.Collapsed;
                 MenuShowCalculatorButton.Visibility = Visibility.Collapsed;
+                MenuDinoButton.Visibility = Visibility.Collapsed;
                 MenuSettingsButton.Visibility = Visibility.Collapsed;
             }
             else
@@ -1255,6 +1256,7 @@ namespace Notepads.Views.MainPage
                 MenuManageCurrenciesButton.Visibility = Visibility.Visible;
                 MenuShowCurrenciesButton.Visibility = Visibility.Visible;
                 MenuShowCalculatorButton.Visibility = Visibility.Visible;
+                MenuDinoButton.Visibility = Visibility.Visible;
                 MenuSettingsButton.Visibility = Visibility.Visible;
             }
 
@@ -1308,6 +1310,12 @@ namespace Notepads.Views.MainPage
                 MenuShowCalculatorButton.KeyboardAcceleratorTextOverride =
                     AppSettingsService.MiniCurrencyShowCalculator ? MiniCurrencyMainMenuCheckedMark : string.Empty;
             }
+
+            if (MenuDinoButton != null)
+            {
+                MenuDinoButton.KeyboardAcceleratorTextOverride =
+                    AppSettingsService.MiniCurrencyShowDino ? MiniCurrencyMainMenuCheckedMark : string.Empty;
+            }
         }
 
         private void MenuShowCurrenciesButton_Click(object sender, RoutedEventArgs e)
@@ -1322,6 +1330,18 @@ namespace Notepads.Views.MainPage
             AppSettingsService.MiniCurrencyShowCalculator = !AppSettingsService.MiniCurrencyShowCalculator;
         }
 
+        private async void MenuDinoButton_Click(object sender, RoutedEventArgs e)
+        {
+            _miniCurrencyKeepMainMenuFlyoutOpenOnce = true;
+            var nextValue = !AppSettingsService.MiniCurrencyShowDino;
+            if (nextValue)
+            {
+                await EnsureMiniCurrencyDinoLoadedAsync();
+            }
+
+            AppSettingsService.MiniCurrencyShowDino = nextValue;
+        }
+
         private void MiniCurrencyShowCurrenciesChanged(object sender, bool show)
         {
             ApplyMiniCurrencyMainContentVisibility();
@@ -1330,6 +1350,17 @@ namespace Notepads.Views.MainPage
 
         private void MiniCurrencyShowCalculatorChanged(object sender, bool show)
         {
+            ApplyMiniCurrencyMainContentVisibility();
+            UpdateMiniCurrencyVisibilityMenuItemsVisual();
+        }
+
+        private async void MiniCurrencyShowDinoChanged(object sender, bool show)
+        {
+            if (show)
+            {
+                await EnsureMiniCurrencyDinoLoadedAsync();
+            }
+
             ApplyMiniCurrencyMainContentVisibility();
             UpdateMiniCurrencyVisibilityMenuItemsVisual();
         }

@@ -32,6 +32,7 @@ namespace Notepads.Settings
         internal static string MiniCurrencyCalculatorButtonsOpacityPercentInt = "MiniCurrencyCalculatorButtonsOpacityPercentInt";
         internal static string MiniCurrencyShowCurrenciesBool = "MiniCurrencyShowCurrenciesBool";
         internal static string MiniCurrencyShowCalculatorBool = "MiniCurrencyShowCalculatorBool";
+        internal static string MiniCurrencyShowDinoBool = "MiniCurrencyShowDinoBool";
         internal static string AppAccentColorHexStr = "AppAccentColorHexStr";
         internal static string CustomAccentColorHexStr = "CustomAccentColorHexStr";
         internal static string UseWindowsAccentColorBool = "UseWindowsAccentColorBool";
