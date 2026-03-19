@@ -11,6 +11,29 @@
     <div id="messageBox" class="sendmessage">
         <div class="sendmessage__pill">Press Space to start</div>
     </div>
+    <div id="crtDebugPanel" class="crt-debug-panel">
+        <div class="crt-debug-panel__title">CRT Debug</div>
+        <label class="crt-debug-panel__row">
+            <span>Частота</span>
+            <input id="crtStepInput" type="range" min="2" max="8" step="1" value="3">
+            <strong id="crtStepValue">3</strong>
+        </label>
+        <label class="crt-debug-panel__row">
+            <span>Толщина</span>
+            <input id="crtThicknessInput" type="range" min="1" max="3" step="1" value="1">
+            <strong id="crtThicknessValue">1</strong>
+        </label>
+        <label class="crt-debug-panel__row">
+            <span>Сила</span>
+            <input id="crtAlphaInput" type="range" min="0.10" max="1.00" step="0.05" value="1.00">
+            <strong id="crtAlphaValue">1.00</strong>
+        </label>
+        <label class="crt-debug-panel__toggle">
+            <input id="crtEnabledInput" type="checkbox" checked>
+            <span>Эффект включен</span>
+        </label>
+    </div>
+    <div class="crt-overlay" aria-hidden="true"></div>
     <div id="main-frame-error" class="interstitial-wrapper">
         <div id="main-content">
             <div class="icon icon-offline" alt=""></div>
@@ -35,5 +58,92 @@ document.onkeydown = function(evt) {
         document.body.classList.add("runner-started");
     }
 };
+
+(function () {
+    var keys = {
+        step: 'dino-crt-step',
+        thickness: 'dino-crt-thickness',
+        alpha: 'dino-crt-alpha',
+        enabled: 'dino-crt-enabled'
+    };
+
+    function getRunner() {
+        return window.Runner && Runner.instance_ ? Runner.instance_ : null;
+    }
+
+    function clampNumber(value, fallback, min, max) {
+        var parsed = Number(value);
+        if (isNaN(parsed)) {
+            return fallback;
+        }
+
+        return Math.min(max, Math.max(min, parsed));
+    }
+
+    function applySettings() {
+        var runner = getRunner();
+        var stepInput = document.getElementById('crtStepInput');
+        var thicknessInput = document.getElementById('crtThicknessInput');
+        var alphaInput = document.getElementById('crtAlphaInput');
+        var enabledInput = document.getElementById('crtEnabledInput');
+
+        var step = clampNumber(stepInput.value, 3, 2, 8);
+        var thickness = clampNumber(thicknessInput.value, 1, 1, 3);
+        var alpha = clampNumber(alphaInput.value, 1, 0.10, 1.00);
+        var enabled = !!enabledInput.checked;
+
+        document.getElementById('crtStepValue').textContent = step;
+        document.getElementById('crtThicknessValue').textContent = thickness;
+        document.getElementById('crtAlphaValue').textContent = alpha.toFixed(2);
+
+        localStorage.setItem(keys.step, String(step));
+        localStorage.setItem(keys.thickness, String(thickness));
+        localStorage.setItem(keys.alpha, alpha.toFixed(2));
+        localStorage.setItem(keys.enabled, enabled ? '1' : '0');
+
+        if (runner) {
+            runner.updateConfigSetting('CRT_ENABLED', enabled);
+            runner.updateConfigSetting('CRT_LINE_STEP', step);
+            runner.updateConfigSetting('CRT_LINE_THICKNESS', thickness);
+            runner.updateConfigSetting('CRT_CUT_ALPHA', alpha);
+        }
+    }
+
+    function hydrateSettings() {
+        var step = clampNumber(localStorage.getItem(keys.step), 3, 2, 8);
+        var thickness = clampNumber(localStorage.getItem(keys.thickness), 1, 1, 3);
+        var alpha = clampNumber(localStorage.getItem(keys.alpha), 1, 0.10, 1.00);
+        var enabled = localStorage.getItem(keys.enabled);
+
+        document.getElementById('crtStepInput').value = step;
+        document.getElementById('crtThicknessInput').value = thickness;
+        document.getElementById('crtAlphaInput').value = alpha.toFixed(2);
+        document.getElementById('crtEnabledInput').checked = enabled !== '0';
+
+        applySettings();
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+        hydrateSettings();
+
+        [
+            'crtStepInput',
+            'crtThicknessInput',
+            'crtAlphaInput',
+            'crtEnabledInput'
+        ].forEach(function (id) {
+            var element = document.getElementById(id);
+            element.addEventListener('input', applySettings);
+            element.addEventListener('change', applySettings);
+        });
+
+        var runnerReadyTimer = setInterval(function () {
+            if (getRunner()) {
+                applySettings();
+                clearInterval(runnerReadyTimer);
+            }
+        }, 150);
+    });
+})();
 </script>
 </html>

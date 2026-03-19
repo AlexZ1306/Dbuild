@@ -105,6 +105,10 @@
      */
     Runner.config = {
         ACCELERATION: 0.001,
+        CRT_CUT_ALPHA: 1,
+        CRT_ENABLED: true,
+        CRT_LINE_STEP: 3,
+        CRT_LINE_THICKNESS: 1,
         BG_CLOUD_SPEED: 0.2,
         BOTTOM_PAD: 10,
         CLEAR_TIME: 3000,
@@ -484,6 +488,8 @@
                     this.gameOverPanel.updateDimensions(this.dimensions.WIDTH);
                     this.gameOverPanel.draw();
                 }
+
+                this.renderCrtOverlay();
             }
         },
 
@@ -633,6 +639,7 @@
             if (this.playing || (!this.activated &&
                 this.tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
                 this.tRex.update(deltaTime);
+                this.renderCrtOverlay();
                 this.scheduleNextUpdate();
             }
         },
@@ -950,6 +957,35 @@
                 this.inverted = document.body.classList.toggle(Runner.classes.INVERTED,
                     this.invertTrigger);
             }
+        },
+
+        /**
+         * Draw a simple CRT-like scanline pass directly into the canvas.
+         * This is intentionally lightweight so it does not affect gameplay logic.
+         */
+        renderCrtOverlay: function () {
+            if (!this.canvasCtx || !this.canvas || !this.config.CRT_ENABLED) {
+                return;
+            }
+
+            var ctx = this.canvasCtx;
+            var width = this.canvas.width;
+            var height = this.canvas.height;
+            var lineStep = this.config.CRT_LINE_STEP;
+            var lineThickness = this.config.CRT_LINE_THICKNESS;
+            var cutAlpha = this.config.CRT_CUT_ALPHA;
+
+            ctx.save();
+            // Punch transparent scanlines through already rendered pixels so the
+            // application background shows through only on sprite rows.
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0, 0, 0, ' + cutAlpha + ')';
+
+            for (var y = 0; y < height; y += lineStep) {
+                ctx.fillRect(0, y, width, lineThickness);
+            }
+
+            ctx.restore();
         }
     };
 

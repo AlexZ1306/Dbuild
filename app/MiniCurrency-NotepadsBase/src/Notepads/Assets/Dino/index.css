@@ -219,6 +219,67 @@ body.runner-started #messageBox {
   visibility: hidden;
 }
 
+.crt-debug-panel {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 220px;
+  padding: 12px 12px 10px;
+  border-radius: 12px;
+  background: rgba(24, 24, 24, 0.82);
+  color: #f2f2f2;
+  font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif;
+  font-size: 12px;
+  z-index: 20;
+  backdrop-filter: blur(8px);
+}
+
+.crt-debug-panel__title {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.crt-debug-panel__row {
+  display: grid;
+  grid-template-columns: 60px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.crt-debug-panel__row span,
+.crt-debug-panel__toggle span {
+  user-select: none;
+}
+
+.crt-debug-panel__row input[type="range"] {
+  width: 100%;
+}
+
+.crt-debug-panel__row strong {
+  text-align: right;
+  font-weight: 600;
+}
+
+.crt-debug-panel__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+body::before,
+body::after {
+  display: none;
+}
+
+.crt-overlay {
+  display: none;
+}
+
 *:focus {
   outline: none !important;
 }
